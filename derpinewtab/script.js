@@ -173,8 +173,6 @@ $(function(){
 								sidebarTimeout = false;
 							}
 							
-							console.log('Open sidebar');
-							
 							$('#settings').addClass('open');
 							
 							setTimeout(function(){
