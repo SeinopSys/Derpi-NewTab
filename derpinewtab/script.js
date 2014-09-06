@@ -6,7 +6,7 @@ $(function(){
 		allowedTags: [],
 	};
 	//	Tag settings
-	var possibleTags = ['safe','suggestive','explicit'];
+	var possibleTags = ['safe','suggestive','questionable','explicit'];
 	if (LStorage.has('setting_allowed_tags')){
 		var setTags = LStorage.get('setting_allowed_tags').split(',');
 		$.each(setTags,function(i,el){
@@ -39,11 +39,8 @@ $(function(){
 		$this.parent().parent().children().each(function(i,el){
 			var $input = $(el).find('input'),
 				tag = $input.attr('name');
-			console.log('checking tag '+tag);
-			if ($input.prop('checked')){
-				console.log('pass '+tag);
+			if ($input.prop('checked'))
 				tagArray.push(tag);
-			}
 		});
 		
 		if (tagArray.length > 0){
@@ -51,7 +48,7 @@ $(function(){
 			LStorage.set('setting_allowed_tags',tagArray.join(','));
 			
 			$('#image').css('opacity','0');
-			$('#settings').removeClass('open');
+			$('#settingsWrap').removeClass('open');
 			$('body').off('mousemove');
 			$('#data').css('opacity','0');
 			
@@ -73,12 +70,21 @@ $(function(){
 		reQuest();
 	},500);
 	
-	function reQuest(){
+	function reQuest(page){
 		$.ajax({
-			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')',
+			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')'+(typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
-				var image = data.search[0],
-					imgElement = new Image();
+				var image, imgElement = new Image(), i = -1;
+				
+				if (data.search.length === 0) return alert('Search returned no results.'+(settings.allowedTags.indexOf('safe') == -1 ? '\nTry enabling the safe system tag.':''));
+				
+				while (++i < data.search.length-1){
+					if (data.search[i].width >= 1280 && data.search[i].height >= 720){
+						image = data.search[i];
+						break;
+					}
+				}
+				if (typeof image === 'undefined') return reQuest(typeof page === 'number' ? page+1 : 2);
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
 					imgElement.src = 'http://'+image.image;
@@ -120,22 +126,28 @@ $(function(){
 					artists.push(el.substring(7));
 			});
 			
-			$('#data').empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">Created by '+textify(artists)+'</a></h1>');
+			var artistText = artists.length ? 'Created by '+textify(artists) : 'Unknown artist';
 			
-			var votestr;
+			$('#data').empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
+			
+			var votestr = '';
 			if (image.upvotes + image.downvotes == 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
-					votestr = image.upvotes+' up';
-					if (image.downvotes > 0) votestr += ' and '+image.downvotes+' down';
-					votestr += 'votes';
+					var pluralVote = true;
+					votestr += image.upvotes+' upvote';
+					if (image.upvotes > 1) votestr += 's';
+					if (image.downvotes > 0){
+						votestr += ' and '+image.downvotes+' downvote';
+						if (image.downvotes > 1) votestr += 's';
+					}
 				}
-				else if (image.downvotes > 0) votestr += image.downvotes+' downvotes';
+				else if (image.downvotes > 0) votestr += image.downvotes+' downvote'+(image.downvotes>1?'s':'');
 			}
 			
 			$('#data').append(
 				'<p>uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+space+votestr+space+
-				(image.comment_count>0?image.comment_count:'no')+' comments</p>'
+				(image.comment_count>0?image.comment_count:'no')+' comment'+(image.comment_count>1||image.comment_count==0?'s':'')+'</p>'
 			);
 			window.updateTimesF();
 			
@@ -158,11 +170,11 @@ $(function(){
 				$('#data').css('opacity','1');
 				fadeOutData();
 				latestX = e.clientX;
-				if (sidebarTimeout == false && $('#settings').hasClass('open')){
+				if (sidebarTimeout == false && $('#settingsWrap').hasClass('open')){
 					if (!$('#settings').is(':hover'))
 						setTimeout(function(){
 							if (!$('#settings').is(':hover'))
-								$('#settings').removeClass('open');
+								$('#settingsWrap').removeClass('open');
 						},400);
 				}
 				else if (latestX <= 5)
@@ -173,7 +185,7 @@ $(function(){
 								sidebarTimeout = false;
 							}
 							
-							$('#settings').addClass('open');
+							$('#settingsWrap').addClass('open');
 							
 							setTimeout(function(){
 								clearTimeout(sidebarTimeout);
@@ -181,7 +193,7 @@ $(function(){
 							},500);
 						},200);
 			}).trigger('mousemove').blur(function(){
-				$('#settings.open').removeClass('open');
+				$('#settingsWrap.open').removeClass('open');
 			});
 		}
 		
