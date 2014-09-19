@@ -70,13 +70,14 @@ $(function(){
 		reQuest();
 	},500);
 	
+	$('#data').html('<h1>Requesting metadata...</h1>').fadeTo(500,1);
 	function reQuest(page){
 		$.ajax({
-			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')'+(typeof page === 'number' ? '&page='+page : ''),
+			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+(typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
 				var image, imgElement = new Image(), i = -1;
 				
-				if (data.search.length === 0) return alert('Search returned no results.'+(settings.allowedTags.indexOf('safe') == -1 ? '\nTry enabling the safe system tag.':''));
+				if (data.search.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':''));
 				
 				while (++i < data.search.length-1){
 					if (data.search[i].width >= 1280 && data.search[i].height >= 720){
@@ -87,6 +88,8 @@ $(function(){
 				if (typeof image === 'undefined') return reQuest(typeof page === 'number' ? page+1 : 2);
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
+					$('#data').html('<h1>Downloading newest image...</h1>').css('opacity','1');
+					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
 						var imgCanvas = document.createElement("canvas"),
