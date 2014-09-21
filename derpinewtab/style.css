@@ -1,4 +1,5 @@
 @import url(metro-scrollbar.css);
+:focus{outline:0}
 
 body, html, #image, #settingsWrap {
 	height:100%;
@@ -34,11 +35,13 @@ body, #image {
 	right: 0;
 	bottom: 0;
 	z-index: 2;
-	width: 100%;
-	
-	background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.2) 25%, rgba(0,0,0,.8) 100%);
+	background: linear-gradient(to top, rgba(0,0,0,.5) 0%, rgba(0,0,0,.675) 25%, rgba(0,0,0,.8) 100%);
+	border-top-left-radius: 20px;
+	box-shadow:
+		0px 0px 10px rgba(0,0,0,.5),
+		0px 0px 10px rgba(0,0,0,.5);
 	padding: 10px;
-	padding-top: 50px;
+	padding-bottom: 5px;
 	box-sizing: border-box;
 	
 	color: #fff;
@@ -64,32 +67,32 @@ body, #image {
     display: block;
 	background-color: #fff;
 	height: 2px;
-    width: 0;
-    opacity: 0;
+	width: 102%;
+    opacity: 1;
 	position: absolute;
-    left: 50%;
-	top: 1.3em;
+	z-index: -1;
+	left: -1%;
+	top: 1.2em;
+	transition-property: height, background-color, top, border-radius;
+	transition-duration: .2s;
+	transition-timing-function: linear;
 }
 #data h1 a:hover:after {
-	width: 102%;
-	left: -1%;
 	opacity: 1;
 	height: 1.4em;
 	top: .1em;
-	z-index: -1;
 	border-radius: 10px;
 	background-color: rgba(0,0,0,.7);
 	box-shadow: 0px 0px 5px rgba(0,0,0,.7);
-	transition-property: width, opacity, left, height, background-color, top;
-	transition-duration: .2s, .1s, .2s, .2s, .2s, .2s;
-	transition-delay: 0, 0, 0, .2s, .2s, .2s;
-	transition-timing-function: ease-in, ease-out, ease-in;
 }
 #data p {
 	margin: 0px;
 }
 #data p:not(:last-child) {
 	margin-bottom: 5px;
+}
+#data p > span.visible:after {
+	content: " • ";
 }
 #settingsWrap {
 	position: absolute;
@@ -154,6 +157,12 @@ body, #image {
 #settings section .input.systags label:not(:last-child) input ~ span {
 	margin-right: 5px;
 }
+#settings section .input.systags label input ~ span {
+	color: #afa;
+}
+#settings section .input.systags label input:not(:checked) ~ span {
+	color: #faa;
+}
 #settings section .input.systags label input ~ span:before {
 	content: "";
 	display: inline-block;
@@ -180,12 +189,56 @@ body, #image {
 	left: 4px;
 	width: calc(100% - 8px);
 	height: 1px;
-	background-color: #fff;
+	background-color: #afa;
 	opacity: 0;
 	transition: oapcity .2s linear;
 }
 #settings section .input.systags label input:not(:checked) ~ span:after {
+	background-color: #faa;
 	opacity: 1;
+}
+#settings section .input.showhide label {
+	display: block;
+	margin-left: 5px;
+	font-size: 14px;
+	cursor: pointer;
+	
+	-webkit-user-select: none;
+	user-select: none;
+}
+#settings section .input.showhide label:not(:last-of-type) {
+	margin-bottom: 5px;
+}
+#settings section .input.showhide label input {
+	display: none;
+}
+#settings section .input.showhide label input + span:after {
+	padding-left: 5px;
+	border-left: 2px solid;
+	content: "Show ";
+	color: #afa;
+	border-left-color: #afa;
+}
+#settings section .input.showhide label input:not(:checked) + span:after {
+	content: "Hide ";
+	color: #faa;
+	border-left-color: #faa;
+}
+#settings section .input.selection select {
+	color: #aaf;
+	border: 0;
+	border-left: 2px solid #aaf;
+	background-color: transparent;
+	-webkit-appearance: none;
+	padding: 0px 0px 0px 5px;
+}
+#settings section .input.selection select option {
+	background-color: #000;
+}
+#settings section input[type="text"]{
+	color: #fff;
+	display: block;
+	margin: 0 auto;
 }
 #settings footer {
 	font-size: 12px;
@@ -195,4 +248,11 @@ body, #image {
 #settings footer,
 #settings footer a {
 	color: rgba(255,255,255,.5);
+}
+
+#tag-settings .re-request {
+	padding: 0px 5px;
+	margin: 5px 0px;
+	color: #ffa;
+	border-left: 2px solid;
 }

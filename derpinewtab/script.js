@@ -1,60 +1,138 @@
 $(function(){
-	var newline = '\n', space = ' &bull; ';
+	var newline = '\n';
 	
 	//Setting check
 	var settings = {
 		allowedTags: [],
+		metadata: {},
 	};
 	//	Tag settings
-	var possibleTags = ['safe','suggestive','questionable','explicit'];
-	if (LStorage.has('setting_allowed_tags')){
-		var setTags = LStorage.get('setting_allowed_tags').split(',');
-		$.each(setTags,function(i,el){
-			if (possibleTags.indexOf(el) > -1)
-				settings.allowedTags.push(el);
-		});
-		if (settings.allowedTags.length > 0) LStorage.set('setting_allowed_tags',settings.allowedTags.join(','));
-	}
-	if (settings.allowedTags.length === 0){
-		LStorage.set('setting_allowed_tags','safe');
-		settings.allowedTags = ['safe'];
-	}
-	$.each(possibleTags,function(i,el){
-		$('#settings .systags').append(
-			'<label>\
-				<input type="checkbox" name="'+el+'"'+(settings.allowedTags.indexOf(el) > -1 ? ' checked':'')+'>\
-				<span>'+el+'</span>\
-			</label>'
-		);
-	});
-	$('#settings .systags label span').on('click',function(e){
-		e.preventDefault();
-		
-		var $this = $(this),
-			$thisInput = $this.prev(),
-			tagArray = [];
-		
-		$thisInput.prop('checked',!$thisInput.prop('checked'));
-		
-		$this.parent().parent().children().each(function(i,el){
-			var $input = $(el).find('input'),
-				tag = $input.attr('name');
-			if ($input.prop('checked'))
-				tagArray.push(tag);
-		});
-		
-		if (tagArray.length > 0){
-			settings.allowedTags = tagArray;
-			LStorage.set('setting_allowed_tags',tagArray.join(','));
-			
-			$('#image').css('opacity','0');
-			$('#settingsWrap').removeClass('open');
-			$('body').off('mousemove');
-			$('#data').css('opacity','0');
-			
-			setTimeout(reQuest,300);
+	(function TagSettings(){
+		var possibleTags = ['safe','suggestive','questionable','explicit'],
+			tagselectTimeout, tagselectCountdownInterval;
+		if (LStorage.has('setting_allowed_tags')){
+			var setTags = LStorage.get('setting_allowed_tags').split(',');
+			$.each(setTags,function(i,el){
+				if (possibleTags.indexOf(el) > -1)
+					settings.allowedTags.push(el);
+			});
+			if (settings.allowedTags.length > 0) LStorage.set('setting_allowed_tags',settings.allowedTags.join(','));
 		}
-	});
+		if (settings.allowedTags.length === 0){
+			LStorage.set('setting_allowed_tags','safe');
+			settings.allowedTags = ['safe'];
+		}
+		$.each(possibleTags,function(i,el){
+			$('#settings .systags').append(
+				'<label>\
+					<input type="checkbox" name="'+el+'"'+(settings.allowedTags.indexOf(el) > -1 ? ' checked':'')+'>\
+					<span>'+el+'</span>\
+				</label>'
+			);
+		});
+		$('#settings .systags label span').on('click',function(e){
+			e.preventDefault();
+			
+			if (typeof tagselectTimeout === 'number'){
+				clearInterval(tagselectTimeout);
+				tagselectTimeout = [][0];
+			}
+			if (typeof tagselectCountdownInterval === "number"){
+				clearInterval(tagselectCountdownInterval);
+				tagselectCountdownInterval = [][0];
+			}
+			
+			var $tagSettings = $('#tag-settings'),
+				i = 6,
+				tagSelectCountdown = function(){
+					if (--i === 0) return clearInterval(tagselectCountdownInterval);
+					
+					var $elem = $('#tag-settings .re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
+					if (!$elem.is(':visible')) $elem.stop().hide().slideDown();
+				},
+				$this = $(this),
+				$thisInput = $this.prev(),
+				tagArray = [];
+			
+			$thisInput.prop('checked',!$thisInput.prop('checked'));
+			
+			tagselectCountdownInterval = setInterval(tagSelectCountdown,1000);
+			tagSelectCountdown();
+			tagselectTimeout = setTimeout(function(){
+				$this.parent().parent().children().each(function(i,el){
+					var $input = $(el).find('input'),
+						tag = $input.attr('name');
+					if ($input.prop('checked'))
+						tagArray.push(tag);
+				});
+				
+				if (tagArray.length > 0){
+					settings.allowedTags = tagArray;
+					LStorage.set('setting_allowed_tags',tagArray.join(','));
+					
+					$('#image').css('opacity','0');
+					$('#settingsWrap').removeClass('open');
+					$('body').off('mousemove');
+					
+					setTimeout(reQuest,300);
+				}
+			}, 5000);
+		});
+	})();
+	// Metadata settings
+	(function MatadataSettings(){
+		var $inputs = $('#metadata-settings .input.showhide input'), keys;
+		$inputs.each(function(){
+			settings.metadata[this.name] = false;
+		});
+		
+		if (!LStorage.has('setting_metadata')){
+			keys = Object.keys(settings.metadata);
+			LStorage.set('setting_metadata',keys.join(','));
+		}
+		else {
+			keys = LStorage.get('setting_metadata');
+			if (keys.length === 0) keys = [];
+			else keys = keys.split(',');
+		}
+		
+		$.each(keys,function(i,el){
+			if (typeof settings.metadata[el] !== 'undefined')
+				settings.metadata[el] = true;
+			else delete keys[i];
+		});
+		
+		function updateMetadataSettings(noupdatekeys){
+			if (noupdatekeys !== true) LStorage.set('setting_metadata',keys.join(','));
+			
+			$inputs.each(function(){
+				$('#data .'+this.name.substring(4))[keys.indexOf(this.name) > -1?'show':'hide']();
+			});
+			
+			$('#data p span').filter(':visible').addClass('visible').last().removeClass('visible');
+		}
+		window.updateMetadataSettings = function(){ updateMetadataSettings() };
+		
+		updateMetadataSettings();
+		
+		$inputs.each(function(){
+			this.checked = !!settings.metadata[this.name];
+			$(this).prop('checked',this.checked);
+		});
+		$('#metadata-settings .input.showhide label input').on('click',function(e){
+			e.stopPropagation();
+			
+			var input = this,
+				isChecked = !$(input).is(':checked'),
+				nameAttr = input.name,
+				attrIndx = keys.indexOf(nameAttr);
+			
+			if (attrIndx == -1) keys.push(nameAttr);
+			else keys.splice(attrIndx,1);
+			
+			updateMetadataSettings();
+		});
+	})();
 	
 	setTimeout(function(){
 		// Begin site
@@ -70,14 +148,16 @@ $(function(){
 		reQuest();
 	},500);
 	
-	$('#data').html('<h1>Requesting metadata...</h1>').fadeTo(500,1);
+	$('#data').html('<h1>Requesting metadata...</h1>').css('opacity',1);
 	function reQuest(page){
+		$('#tag-settings .re-request').slideUp();
+		
 		$.ajax({
 			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+(typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
 				var image, imgElement = new Image(), i = -1;
 				
-				if (data.search.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':''));
+				if (data.search.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':'')), fadeIt();
 				
 				while (++i < data.search.length-1){
 					if (data.search[i].width >= 1280 && data.search[i].height >= 720){
@@ -112,6 +192,9 @@ $(function(){
 						LStorage.set("image_hash", image.sha512_hash);
 						
 						metadata(image, imgAsDataURL);
+					}).error(function(){
+						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading a minute or so</p>');
+						fadeIt();
 					});
 				}
 				else {
@@ -133,7 +216,7 @@ $(function(){
 			
 			$('#data').empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
 			
-			var votestr = '';
+			var votestr = '', cc = image.comment_count;
 			if (image.upvotes + image.downvotes == 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
@@ -149,9 +232,13 @@ $(function(){
 			}
 			
 			$('#data').append(
-				'<p>uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+space+votestr+space+
-				(image.comment_count>0?image.comment_count:'no')+' comment'+(image.comment_count>1||image.comment_count==0?'s':'')+'</p>'
+				'<p>\
+					<span class="uploadtime visible">uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+'</span>\
+					<span class="votes">'+votestr+'</span>\
+					<span class="comments">'+(cc>0?cc:'no')+' comment'+(cc>1||cc==0?'s':'')+'</span>\
+				</p>'
 			);
+			updateMetadataSettings();
 			window.updateTimesF();
 			
 			if ($('#style').html().length > 0){
@@ -204,13 +291,13 @@ $(function(){
 			var hideFunction = function(){
 				if (!$('#data').is(':hover'))
 					$('#data').css('opacity','0');
-				else movetimeout = setTimeout(hideFunction, 2000);
+				else movetimeout = setTimeout(hideFunction, 4000);
 			};
 			if (movetimeout !== false){
 				clearTimeout(movetimeout);
 				movetimeout = false;
 			}
-			movetimeout = setTimeout(hideFunction, 2000);
+			movetimeout = setTimeout(hideFunction, 4000);
 		}
 	}
 	

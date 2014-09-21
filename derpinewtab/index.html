@@ -12,16 +12,28 @@
 <div id="settingsWrap">
 	<div id="settings">
 		<header>Settings</header>
-		<section>
+		<section id="tag-settings">
 			<h2>Allowed system tags</h2>
 			<p>Set the system tags you want to allow when requesting images.</p>
 			<div class="input systags"></div>
+			<p class="re-request" style="display: none">The image will be updated in <span></span> to reflect tag preferece changes.</p>
 		</section>
-		<section>
-			<h2>[WIP] Additional tag</h2>
-			<p>Provid a single tag that should be added to the search query. <u>Depending on the setting above, you <i>may</i> get <b>no results</b>!</u></p>
-			<div class="input xtratag">
-				<input type="text" name="xtratag">
+		<section id="metadata-settings">
+			<h2>Metadata</h2>
+			<p>Choose what inforamtion you want to see in the botom left corner.</p>
+			<div class="input showhide">
+				<label><input type="checkbox" name="showvotes"><span></span> votes</label>
+				<label><input type="checkbox" name="showcomments"><span></span> comment count</label>
+			</div>
+		</section>
+		<section id="cropping-settings">
+			<h2>[WIP] Image cropping</h2>
+			<p>This setting allows you to modify how images bigger than your screen resolution are treated.</p>
+			<div class="input selection">
+				<select>
+					<option value="cover">Cover the window</option>
+					<option value="contain">Fit inside window</option>
+				</select>
 			</div>
 		</section>
 		<footer>Derpi-New Tab v0.0.1 by <a href="http://djdavid98.zymichost.com/">DJDavid98</a></footer>
