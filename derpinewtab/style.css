@@ -230,7 +230,9 @@ body, #image {
 	border-left: 2px solid #aaf;
 	background-color: transparent;
 	-webkit-appearance: none;
-	padding: 0px 0px 0px 5px;
+	padding: 0px;
+	padding-left: 1px;
+	font-size: 14px;
 }
 #settings section .input.selection select option {
 	background-color: #000;
