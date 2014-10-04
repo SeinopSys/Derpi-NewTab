@@ -317,7 +317,7 @@ $(function(){
 				maxDest = list_str_len-3,
 				i = 0;
 			list_str.splice(list_str_len-1,0,append);
-			while (i < maxDest){
+			while (i <= maxDest){
 				if (i == list_str_len-1) continue;
 				list_str[i] += ',';
 				i++;
