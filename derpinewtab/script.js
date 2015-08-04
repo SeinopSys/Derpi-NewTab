@@ -157,18 +157,21 @@ $(function(){
 			success: function(data){
 				var image, imgElement = new Image(), i = -1;
 				
-				if (data.search.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':'')), fadeIt();
+				data = data.search;
 				
-				while (++i < data.search.length-1){
-					if (data.search[i].width >= 1280 && data.search[i].height >= 720){
-						image = data.search[i];
+				if (data.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':'')), fadeIt();
+				
+				while (++i < data.length-1){
+					if (data[i].width >= 1280 && data[i].height >= 720){
+						image = data[i];
 						break;
 					}
 				}
+				
 				if (typeof image === 'undefined') return reQuest(typeof page === 'number' ? page+1 : 2);
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
-					$('#data').html('<h1>Downloading newest image...</h1>').css('opacity','1');
+					if (typeof page === 'undefined') $('#data').html('<h1>Downloading newest image...</h1>').css('opacity','1');
 					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
@@ -182,9 +185,16 @@ $(function(){
 						// Draw image into canvas element
 						imgContext.drawImage(imgElement, 0, 0, image.width, image.height);
 						
-						
 						// Get canvas contents as a data URL
-						var imgAsDataURL = imgCanvas.toDataURL("image/png");
+						try {
+							var imgAsDataURL = imgCanvas.toDataURL("image/png");
+						}
+						catch (e){
+							var a = document.createElement('a');
+							a.href = imgElement.src;
+							$('#data').html('<h1>Cross domain download issues</h1><p>Please whitelist the domain <b>'+a.hostname+'</b> in manifest.json</p>');
+							return;
+						}
 						imgAsDataURL = thumbnail(imgAsDataURL, 1280, 720);
 						
 						// Save image into localStorage
@@ -195,6 +205,7 @@ $(function(){
 					}).error(function(){
 						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading a minute or so</p>');
 						fadeIt();
+						return reQuest(typeof page === 'number' ? page+1 : 2)
 					});
 				}
 				else {
