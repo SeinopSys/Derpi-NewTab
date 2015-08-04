@@ -12,4 +12,4 @@ Since the extension is installed in Developer Mode, the browser will display a w
 
 ## Why don't you just upload it to the CWS? ##
 
-Since I don't have a credit card I cannot upload anything to the Chrome Web Store because of the god damn developer fee, so I had to find alternate ways to distribute the extension. Not like it would get too much attention anyway.
+Since I don't have a credit card I cannot upload anything to the Chrome Web Store because of the developer fee, so I had to find alternate ways to distribute the extension. Not like it would get too much attention anyway.
