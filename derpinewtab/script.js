@@ -3,9 +3,16 @@ $(function(){
 	
 	//Setting check
 	var settings = {
-		allowedTags: [],
-		metadata: {},
-	};
+			allowedTags: [],
+			metadata: {},
+		},
+		$settings = $('#settings'),
+		$tagSettings = $('#tag-settings'),
+		$body = $(document.body),
+		$metaSettings = $('#metadata-settings'),
+		$image = $('#image'),
+		$data = $('#data'),
+		$style = $('#style');
 	//	Tag settings
 	(function TagSettings(){
 		var possibleTags = ['safe','suggestive','questionable','explicit'],
@@ -23,31 +30,31 @@ $(function(){
 			settings.allowedTags = ['safe'];
 		}
 		$.each(possibleTags,function(i,el){
-			$('#settings .systags').append(
+			$settings.filter('.systags').append(
 				'<label>\
 					<input type="checkbox" name="'+el+'"'+(settings.allowedTags.indexOf(el) > -1 ? ' checked':'')+'>\
 					<span>'+el+'</span>\
 				</label>'
 			);
 		});
-		$('#settings .systags label span').on('click',function(e){
+		$settings.find('.systags label span').on('click',function(e){
 			e.preventDefault();
 			
 			if (typeof tagselectTimeout === 'number'){
 				clearInterval(tagselectTimeout);
-				tagselectTimeout = [][0];
+				//noinspection JSUnusedAssignment
+				tagselectTimeout = undefined;
 			}
 			if (typeof tagselectCountdownInterval === "number"){
 				clearInterval(tagselectCountdownInterval);
-				tagselectCountdownInterval = [][0];
+				tagselectCountdownInterval = undefined;
 			}
 			
-			var $tagSettings = $('#tag-settings'),
-				i = 6,
+			var i = 6,
 				tagSelectCountdown = function(){
 					if (--i === 0) return clearInterval(tagselectCountdownInterval);
 					
-					var $elem = $('#tag-settings .re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
+					var $elem = $tagSettings.find('.re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
 					if (!$elem.is(':visible')) $elem.stop().hide().slideDown();
 				},
 				$this = $(this),
@@ -70,9 +77,9 @@ $(function(){
 					settings.allowedTags = tagArray;
 					LStorage.set('setting_allowed_tags',tagArray.join(','));
 					
-					$('#image').css('opacity','0');
+					$image.css('opacity','0');
 					$('#settingsWrap').removeClass('open');
-					$('body').off('mousemove');
+					$body.off('mousemove');
 					
 					setTimeout(reQuest,300);
 				}
@@ -81,7 +88,7 @@ $(function(){
 	})();
 	// Metadata settings
 	(function MatadataSettings(){
-		var $inputs = $('#metadata-settings .input.showhide input'), keys;
+		var $inputs = $metaSettings.find('.input.showhide input'), keys;
 		$inputs.each(function(){
 			settings.metadata[this.name] = false;
 		});
@@ -109,7 +116,7 @@ $(function(){
 				$('#data .'+this.name.substring(4))[keys.indexOf(this.name) > -1?'show':'hide']();
 			});
 			
-			$('#data p span').filter(':visible').addClass('visible').last().removeClass('visible');
+			$data.find('p span').filter(':visible').addClass('visible').last().removeClass('visible');
 		}
 		window.updateMetadataSettings = function(){ updateMetadataSettings() };
 		
@@ -119,16 +126,14 @@ $(function(){
 			this.checked = !!settings.metadata[this.name];
 			$(this).prop('checked',this.checked);
 		});
-		$('#metadata-settings .input.showhide label input').on('click',function(e){
+		$metaSettings.find('.input.showhide label input').on('click',function(e){
 			e.stopPropagation();
 			
-			var input = this,
-				isChecked = !$(input).is(':checked'),
-				nameAttr = input.name,
+			var nameAttr = this.name,
 				attrIndx = keys.indexOf(nameAttr);
 			
 			if (attrIndx == -1) keys.push(nameAttr);
-			else keys.splice(attrIndx,1);
+			else keys.splice(attrIndx, 1);
 			
 			updateMetadataSettings();
 		});
@@ -137,20 +142,20 @@ $(function(){
 	setTimeout(function(){
 		// Begin site
 		if (LStorage.has("image_data") && LStorage.has("image_hash")){
-			$('#style').html(newline+
+			$style.html(newline+
 				'#image {'+newline+
 				'	background-image: url('+LStorage.get("image_data")+');'+newline+
 				'}'
 			);
-			$('#image').css('opacity','1').attr('data-hash',LStorage.get('image_hash'));
+			$image.css('opacity','1').attr('data-hash',LStorage.get('image_hash'));
 		}
 		
 		reQuest();
 	},500);
 	
-	$('#data').html('<h1>Requesting metadata...</h1>').css('opacity',1);
+	$data.html('<h1>Requesting metadata...</h1>').css('opacity', 1);
 	function reQuest(page){
-		$('#tag-settings .re-request').slideUp();
+		$tagSettings.find('.re-request').slideUp();
 		
 		$.ajax({
 			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+(typeof page === 'number' ? '&page='+page : ''),
@@ -203,7 +208,7 @@ $(function(){
 						
 						metadata(image, imgAsDataURL);
 					}).error(function(){
-						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading a minute or so</p>');
+						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
 						fadeIt();
 						return reQuest(typeof page === 'number' ? page+1 : 2)
 					});
@@ -225,13 +230,12 @@ $(function(){
 			
 			var artistText = artists.length ? 'Created by '+textify(artists) : 'Unknown artist';
 			
-			$('#data').empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
+			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
 			
 			var votestr = '', cc = image.comment_count;
 			if (image.upvotes + image.downvotes == 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
-					var pluralVote = true;
 					votestr += image.upvotes+' upvote';
 					if (image.upvotes > 1) votestr += 's';
 					if (image.downvotes > 0){
@@ -242,7 +246,7 @@ $(function(){
 				else if (image.downvotes > 0) votestr += image.downvotes+' downvote'+(image.downvotes>1?'s':'');
 			}
 			
-			$('#data').append(
+			$data.append(
 				'<p>\
 					<span class="uploadtime visible">uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+'</span>\
 					<span class="votes">'+votestr+'</span>\
@@ -251,9 +255,9 @@ $(function(){
 			);
 			updateMetadataSettings();
 			window.updateTimesF();
-			
-			if ($('#style').html().length > 0){
-				$('#style').html(newline+
+
+			if ($style.html().length > 0){
+				$style.html(newline+
 					'#image {'+newline+
 					'	background-image: url('+cachedurl+');'+newline+
 					'	background-size: cover;'+newline+
@@ -265,9 +269,9 @@ $(function(){
 		
 		var movetimeout = false, sidebarTimeout = false, latestX;
 		function fadeIt(){
-			$('#image').css('opacity','1');
+			$image.css('opacity', 1);
 			
-			$('body').on('mousemove',function(e){
+			$body.on('mousemove',function(e){
 				$('#data').css('opacity','1');
 				fadeOutData();
 				latestX = e.clientX;
@@ -300,8 +304,8 @@ $(function(){
 		
 		function fadeOutData(){
 			var hideFunction = function(){
-				if (!$('#data').is(':hover'))
-					$('#data').css('opacity','0');
+				if (!$data.is(':hover'))
+					$data.css('opacity', 0);
 				else movetimeout = setTimeout(hideFunction, 4000);
 			};
 			if (movetimeout !== false){
@@ -321,7 +325,7 @@ $(function(){
 		if (typeof append == 'undefined') append = 'and';
 		if (typeof separator == 'undefined') separator = ',';
 		
-		if (typeof list === 'string') $list = $list.split(separator);
+		if (typeof list === 'string') list = $list.split(separator);
 		if (list.length > 1){
 			var list_str = list,
 				list_str_len = list_str.length,
