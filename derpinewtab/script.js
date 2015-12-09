@@ -188,7 +188,7 @@ $(function(){
 						LStorage.set("image_data", imgElement.src);
 						LStorage.set("image_hash", image.sha512_hash);
 						
-						metadata(image, imgAsDataURL);
+						metadata(image, imgElement.src);
 					}).error(function(){
 						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
 						fadeIt();
