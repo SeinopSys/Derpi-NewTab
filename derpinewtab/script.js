@@ -164,7 +164,11 @@ $(function(){
 				
 				data = data.search;
 				
-				if (data.length === 0) return $('#data').html('<h1>Search returned no results.</h1>'+(settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>':'')), fadeIt();
+				if (data.length === 0) {
+					fadeIt();
+					$('#data').html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
+					return;
+				}
 				
 				while (++i < data.length-1){
 					if (data[i].width >= 1280 && data[i].height >= 720){
@@ -180,30 +184,8 @@ $(function(){
 					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
-						var imgCanvas = document.createElement("canvas"),
-							imgContext = imgCanvas.getContext("2d");
-						
-						// Make sure canvas is as big as the picture
-						imgCanvas.width = image.width;
-						imgCanvas.height = image.height;
-						
-						// Draw image into canvas element
-						imgContext.drawImage(imgElement, 0, 0, image.width, image.height);
-						
-						// Get canvas contents as a data URL
-						try {
-							var imgAsDataURL = imgCanvas.toDataURL("image/png");
-						}
-						catch (e){
-							var a = document.createElement('a');
-							a.href = imgElement.src;
-							$('#data').html('<h1>Cross domain download issues</h1><p>Please whitelist the domain <b>'+a.hostname+'</b> in manifest.json</p>');
-							return;
-						}
-						imgAsDataURL = thumbnail(imgAsDataURL, 1280, 720);
-						
 						// Save image into localStorage
-						LStorage.set("image_data", imgAsDataURL);
+						LStorage.set("image_data", imgElement.src);
 						LStorage.set("image_hash", image.sha512_hash);
 						
 						metadata(image, imgAsDataURL);
@@ -259,7 +241,7 @@ $(function(){
 			if ($style.html().length > 0){
 				$style.html(newline+
 					'#image {'+newline+
-					'	background-image: url('+cachedurl+');'+newline+
+					'	background-image: url("'+cachedurl.replace(/"/g,'%22')+'");'+newline+
 					'	background-size: cover;'+newline+
 					'}'
 				);

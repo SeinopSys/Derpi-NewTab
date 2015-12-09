@@ -3,7 +3,7 @@
 	
 	"name": "Derpi-New Tab",
 	"description": "A new tab page featuring the latest pony wallpaper from Derpibooru.org",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	
 	"permissions": [ "https://derpibooru.org/", "https://derpicdn.net/", "https://img0.derpicdn.net/", "https://img1.derpicdn.net/", "https://img2.derpicdn.net/", "https://img3.derpicdn.net/", "https://img4.derpicdn.net/", "https://img5.derpicdn.net/" ],
 	
