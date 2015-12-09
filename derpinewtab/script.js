@@ -1,4 +1,6 @@
+/* global LStorage,updateMetadataSettings */
 $(function(){
+	'use strict';
 	var newline = '\n';
 	
 	//Setting check
@@ -8,7 +10,7 @@ $(function(){
 		},
 		$settings = $('#settings'),
 		$tagSettings = $('#tag-settings'),
-		$body = $(document.body),
+		$body = $('body'),
 		$metaSettings = $('#metadata-settings'),
 		$image = $('#image'),
 		$data = $('#data'),
@@ -29,12 +31,17 @@ $(function(){
 			LStorage.set('setting_allowed_tags','safe');
 			settings.allowedTags = ['safe'];
 		}
+		var $systags = $settings.find('.systags');
 		$.each(possibleTags,function(i,el){
-			$settings.filter('.systags').append(
-				'<label>\
-					<input type="checkbox" name="'+el+'"'+(settings.allowedTags.indexOf(el) > -1 ? ' checked':'')+'>\
-					<span>'+el+'</span>\
-				</label>'
+			$systags.append(
+				$(document.createElement('label')).append(
+					$(document.createElement('input')).attr({
+						type: 'checkbox',
+						name: el,
+						checked: settings.allowedTags.indexOf(el) > -1,
+					}),
+					'<span>'+el+'</span>'
+				)
 			);
 		});
 		$settings.find('.systags label span').on('click',function(e){
@@ -132,7 +139,7 @@ $(function(){
 			var nameAttr = this.name,
 				attrIndx = keys.indexOf(nameAttr);
 			
-			if (attrIndx == -1) keys.push(nameAttr);
+			if (attrIndx === -1) keys.push(nameAttr);
 			else keys.splice(attrIndx, 1);
 			
 			updateMetadataSettings();
@@ -166,7 +173,7 @@ $(function(){
 				
 				if (data.length === 0) {
 					fadeIt();
-					$('#data').html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') == -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
+					$('#data').html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') === -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
 					return;
 				}
 				
@@ -180,7 +187,7 @@ $(function(){
 				if (typeof image === 'undefined') return reQuest(typeof page === 'number' ? page+1 : 2);
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
-					if (typeof page === 'undefined') $('#data').html('<h1>Downloading newest image...</h1>').css('opacity','1');
+					if (typeof page === 'undefined') $('#data').html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
@@ -192,7 +199,7 @@ $(function(){
 					}).error(function(){
 						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
 						fadeIt();
-						return reQuest(typeof page === 'number' ? page+1 : 2)
+						return reQuest(typeof page === 'number' ? page+1 : 2);
 					});
 				}
 				else {
@@ -215,7 +222,7 @@ $(function(){
 			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
 			
 			var votestr = '', cc = image.comment_count;
-			if (image.upvotes + image.downvotes == 0) votestr = 'no votes';
+			if (image.upvotes + image.downvotes === 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
 					votestr += image.upvotes+' upvote';
@@ -229,11 +236,11 @@ $(function(){
 			}
 			
 			$data.append(
-				'<p>\
-					<span class="uploadtime visible">uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+'</span>\
-					<span class="votes">'+votestr+'</span>\
-					<span class="comments">'+(cc>0?cc:'no')+' comment'+(cc>1||cc==0?'s':'')+'</span>\
-				</p>'
+				'<p>'+
+				'	<span class="uploadtime visible">uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+'</span>'+
+				'	<span class="votes">'+votestr+'</span>'+
+				'	<span class="comments">'+(cc>0?cc:'no')+' comment'+(cc!==1?'s':'')+'</span>'+
+				'</p>'
 			);
 			updateMetadataSettings();
 			window.updateTimesF();
@@ -257,7 +264,7 @@ $(function(){
 				$('#data').css('opacity','1');
 				fadeOutData();
 				latestX = e.clientX;
-				if (sidebarTimeout == false && $('#settingsWrap').hasClass('open')){
+				if (sidebarTimeout === false && $('#settingsWrap').hasClass('open')){
 					if (!$('#settings').is(':hover'))
 						setTimeout(function(){
 							if (!$('#settings').is(':hover'))
@@ -265,7 +272,7 @@ $(function(){
 						},400);
 				}
 				else if (latestX <= 5)
-					if (sidebarTimeout == false)
+					if (sidebarTimeout === false)
 						sidebarTimeout = setTimeout(function(){
 							if (latestX > 5){
 								clearTimeout(sidebarTimeout);
@@ -304,18 +311,21 @@ $(function(){
 		
 	// List textifier
 	function textify(list, append, separator){
-		if (typeof append == 'undefined') append = 'and';
-		if (typeof separator == 'undefined') separator = ',';
+		if (typeof append === 'undefined') append = 'and';
+		if (typeof separator === 'undefined') separator = ',';
+
+		var list_str;
 		
-		if (typeof list === 'string') list = $list.split(separator);
+		if (typeof list === 'string') list = list.split(separator);
 		if (list.length > 1){
-			var list_str = list,
-				list_str_len = list_str.length,
+			list_str = list;
+			var list_str_len = list_str.length,
 				maxDest = list_str_len-3,
 				i = 0;
 			list_str.splice(list_str_len-1,0,append);
 			while (i <= maxDest){
-				if (i == list_str_len-1) continue;
+				if (i === list_str_len-1)
+					continue;
 				list_str[i] += ',';
 				i++;
 			}
