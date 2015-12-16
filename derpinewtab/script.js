@@ -1,20 +1,22 @@
 /* global LStorage,updateMetadataSettings */
 $(function(){
 	'use strict';
-	var newline = '\n';
-	
+
 	//Setting check
 	var settings = {
 			allowedTags: [],
 			metadata: {},
+			crop: undefined,
 		},
 		$settings = $('#settings'),
 		$tagSettings = $('#tag-settings'),
 		$body = $('body'),
 		$metaSettings = $('#metadata-settings'),
+		$cropSettings = $('#crop-settings'),
 		$image = $('#image'),
 		$data = $('#data'),
-		$style = $('#style');
+		$style = $('#style'),
+		_currentImageURL;
 	//	Tag settings
 	(function TagSettings(){
 		var possibleTags = ['safe','suggestive','questionable','explicit'],
@@ -145,20 +147,54 @@ $(function(){
 			updateMetadataSettings();
 		});
 	})();
-	
+	// Image cropping settings
+	(function ImageCroppingSettings(){
+		var $select = $cropSettings.find('.input.selection select');
+
+		if (!LStorage.has('setting_crop')){
+			settings.crop = 'cover';
+			LStorage.set('setting_crop', settings.crop);
+		}
+		else settings.crop = LStorage.get('setting_crop');
+
+		function updateCroppingSettings(){
+			var setTo = settings.crop;
+			if (['contain','cover','100% 100%'].indexOf(setTo) === -1)
+				setTo = 'cover';
+
+			LStorage.set('setting_crop', setTo);
+			settings.crop = setTo;
+			setBackgroundStyles();
+		}
+		window.updateCroppingSettings = function(){ updateCroppingSettings() };
+
+		updateCroppingSettings();
+
+		$select.on('change',function(){
+			settings.crop = $select.val();
+
+			updateCroppingSettings();
+		});
+	})();
+
+	// Background size updater
+	function setBackgroundStyles(image_url){
+		if (typeof image_url === 'string')
+			_currentImageURL = image_url;
+		else if (typeof _currentImageURL !== 'string')
+			return;
+		$style.html('#image{background-image:url("'+_currentImageURL.replace(/"/g, '%22')+'");background-size:'+settings.crop+'}');
+	}
+
 	setTimeout(function(){
 		// Begin site
 		if (LStorage.has("image_data") && LStorage.has("image_hash")){
-			$style.html(newline+
-				'#image {'+newline+
-				'	background-image: url('+LStorage.get("image_data")+');'+newline+
-				'}'
-			);
+			setBackgroundStyles(LStorage.get("image_data"));
 			$image.css('opacity','1').attr('data-hash',LStorage.get('image_hash'));
 		}
 		
 		reQuest();
-	},500);
+	},1);
 	
 	$data.html('<h1>Requesting metadata...</h1>').css('opacity', 1);
 	function reQuest(page){
@@ -245,14 +281,8 @@ $(function(){
 			updateMetadataSettings();
 			window.updateTimesF();
 
-			if ($style.html().length > 0){
-				$style.html(newline+
-					'#image {'+newline+
-					'	background-image: url("'+cachedurl.replace(/"/g,'%22')+'");'+newline+
-					'	background-size: cover;'+newline+
-					'}'
-				);
-			}
+			if ($style.is(':empty'))
+				setBackgroundStyles(cachedurl);
 			fadeIt();
 		}
 		

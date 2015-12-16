@@ -1,3 +1,6 @@
-# Derpibooru New Tab Page for Google Chrome
+<p align="center"><img src="https://raw.githubusercontent.com/ponydevs/Derpi-NewTab/master/screenshots/Display%20with%20info.png" alt="Derpi-New Tab" width="400px"></p>
+<h1 align="center">Derpi-New Tab</h1>
 
-This is a small and simplistic new tab page replacement for Google Chrome, which uses the latest wallpapers from [Derpibooru.org](http://derpibooru.org/). Now available (still under testing) in the [Chrome Web Store](https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl)
+A simplistic "New tab" page replacement for Google Chrome, which features pony wallpapers from [Derpibooru.org](http://derpibooru.org/).
+
+<p align="center"><a href="https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_340x96.png" alt="Download Derpi-New Tab from the Chrome Web Store"></a></p>
