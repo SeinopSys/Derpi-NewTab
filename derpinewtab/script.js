@@ -164,6 +164,7 @@ $(function(){
 
 			LStorage.set('setting_crop', setTo);
 			settings.crop = setTo;
+			$select.val(setTo);
 			setBackgroundStyles();
 		}
 		window.updateCroppingSettings = function(){ updateCroppingSettings() };
@@ -198,7 +199,7 @@ $(function(){
 	
 	$data.html('<h1>Requesting metadata...</h1>').css('opacity', 1);
 	function reQuest(page){
-		$tagSettings.find('.re-request').slideUp();
+		$tagSettings.find('.re-request:visible').slideUp();
 		
 		$.ajax({
 			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+(typeof page === 'number' ? '&page='+page : ''),
@@ -214,16 +215,19 @@ $(function(){
 				}
 				
 				while (++i < data.length-1){
-					if (data[i].width >= 1280 && data[i].height >= 720){
+					// Optimal size images are above 720p and below 4096px in width & height, since larger images will make the browser lag
+					if (data[i].width >= 1280 && data[i].height >= 720 && data[i].width <= 4096 && data[i].height <= 4096){
 						image = data[i];
 						break;
 					}
 				}
 				
-				if (typeof image === 'undefined') return reQuest(typeof page === 'number' ? page+1 : 2);
+				if (typeof image === 'undefined')
+					return reQuest(typeof page === 'number' ? page+1 : 2);
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
-					if (typeof page === 'undefined') $('#data').html('<h1>Searching for new image...</h1>').css('opacity','1');
+					if (typeof page === 'undefined')
+						$('#data').html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
@@ -238,9 +242,7 @@ $(function(){
 						return reQuest(typeof page === 'number' ? page+1 : 2);
 					});
 				}
-				else {
-					metadata(image, getCachedIMGURL());
-				}
+				else metadata(image, getCachedIMGURL());
 			}
 		});
 		
@@ -281,8 +283,7 @@ $(function(){
 			updateMetadataSettings();
 			window.updateTimesF();
 
-			if ($style.is(':empty'))
-				setBackgroundStyles(cachedurl);
+			setBackgroundStyles(cachedurl);
 			fadeIt();
 		}
 		
