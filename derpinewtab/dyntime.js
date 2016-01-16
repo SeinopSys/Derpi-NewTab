@@ -1,6 +1,7 @@
 (function($){
+	'use strict';
 	var timePad = function(i){if(!isNaN(i)){i=parseInt(i);if (i<10&&i>=0)i='0'+i;else if(i<0)i='-0'+Math.abs(i);else i=i.toString()}return i};
-	var months = [ undefined,
+	var months = [
 		"January", 
 		"February",
 		"March",
@@ -26,26 +27,17 @@
 	var dateformat = {
 		order: '{{wd}}, {{d}} {{mo}}, {{y}}. {{h}}:{{mi}}',
 		day: function(date){
-			var ret;
-			if (date == 1 || date == 21 || date == 31 ) ret = date+"st";
-			else if (date == 2 || date == 22 ) ret = date+"nd";
-			else if (date == 3 || date == 23 ) ret = date+"rd";
-			else ret = date+"th";
+			var ret = date, rem = date % 10;
+			if (date !== 11 && rem === 1) ret += 'st';
+			else if (date !== 12 && rem === 2) ret += 'nd';
+			else if (date !== 13 && rem === 3) ret += 'rd';
+			else ret += 'th';
 			return ret;
 		},
 		weekday: function(wd){ return weekdays[parseInt(wd)] },
-		month: function(m){ return months[parseInt(m)] },
+		month: function(m){ return months[parseInt(m)-1] },
 		year: function(y){ return y },
 	};
-	var snLnArr = [
-		'y:year',
-		'mo:month',
-		'w:week',
-		'd:day',
-		'h:hour',
-		'mi:minute',
-		's:second',
-	];
 	var snLnObj = {
 		s:'second',
 		mi:'minute',
@@ -56,9 +48,9 @@
 		y:'year',
 	};
 	var timeparts = function(key, num){
-			if (typeof snLnObj[key] !== 'undefined') return num+' '+snLnObj[key]+(num > 1 ? 's' : '');
-			else return undefined;
-		};
+		if (typeof snLnObj[key] !== 'undefined')
+			return num+' '+snLnObj[key]+(num > 1 ? 's' : '');
+	};
 	var update = function(){
 		$('time').each(function(){
 			var date = $(this).attr('datetime');
@@ -67,7 +59,7 @@
 			
 			if (isNaN(postdate.getTime())) return true;
 			
-			var date = {
+			date = {
 				d: dateformat.day(postdate.getDate()),
 				y: dateformat.year(postdate.getFullYear()),
 				mo: dateformat.month(postdate.getMonth()+1),
@@ -75,16 +67,14 @@
 				h: timePad(postdate.getHours()),
 				mi: timePad(postdate.getMinutes()),
 				order: dateformat.order,
-			}
+			};
 			var keys = Object.keys(date);
 			keys.splice(keys.indexOf('order'),1);
 			
 			for (var i=0,l=keys.length; i<l; i++) date.order = date.order.replace(new RegExp('\{\{'+keys[i]+'\}\}'),date[keys[i]]);
 			
 			$(this).attr( 'title', date.order );
-			
-			var $past = $(this).parent().find('.time-past');
-			
+
 			var now = new Date();
 			var timestr = createTimeStr(timeDifference(now,postdate));
 			
@@ -149,5 +139,6 @@
 	window.updateTimesF = function(){
 		update.apply(update,arguments);
 	};
-	if (window.noAutoUpdateTimes !== true) window.updateTimes = setInterval(update,10000);
+	if (window.noAutoUpdateTimes !== true)
+		window.updateTimes = setInterval(update,10000);
 })(jQuery);

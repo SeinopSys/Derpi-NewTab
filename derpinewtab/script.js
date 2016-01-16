@@ -8,6 +8,7 @@ $(function(){
 			metadata: {},
 			crop: undefined,
 		},
+		$settingsWrap = $('#settingsWrap'),
 		$settings = $('#settings'),
 		$tagSettings = $('#tag-settings'),
 		$body = $('body'),
@@ -87,7 +88,7 @@ $(function(){
 					LStorage.set('setting_allowed_tags',tagArray.join(','));
 					
 					$image.css('opacity','0');
-					$('#settingsWrap').removeClass('open');
+					$settingsWrap.removeClass('open');
 					$body.off('mousemove');
 					
 					setTimeout(reQuest,300);
@@ -202,7 +203,10 @@ $(function(){
 		$tagSettings.find('.re-request:visible').slideUp();
 		
 		$.ajax({
-			url: 'https://derpibooru.org/search.json?q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+(typeof page === 'number' ? '&page='+page : ''),
+			url: 'https://derpibooru.org/search.json'+
+			        '?filter_id=56027'+ // "Everything" filter
+			        '&q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+
+			        (typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
 				var image, imgElement = new Image(), i = -1;
 				
@@ -210,7 +214,7 @@ $(function(){
 				
 				if (data.length === 0) {
 					fadeIt();
-					$('#data').html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') === -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
+					$data.html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') === -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
 					return;
 				}
 				
@@ -227,7 +231,7 @@ $(function(){
 				
 				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
 					if (typeof page === 'undefined')
-						$('#data').html('<h1>Searching for new image...</h1>').css('opacity','1');
+						$data.html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
 					imgElement.src = 'http://'+image.image;
 					$(imgElement).load(function(){
@@ -237,7 +241,7 @@ $(function(){
 						
 						metadata(image, imgElement.src);
 					}).error(function(){
-						$('#data').html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
+						$data.html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
 						fadeIt();
 						return reQuest(typeof page === 'number' ? page+1 : 2);
 					});
@@ -255,7 +259,7 @@ $(function(){
 					artists.push(el.substring(7));
 			});
 			
-			var artistText = artists.length ? 'Created by '+textify(artists) : 'Unknown artist';
+			var artistText = artists.length ? 'By '+textify(artists) : 'Artist unknown';
 			
 			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
 			
@@ -285,40 +289,43 @@ $(function(){
 
 			setBackgroundStyles(cachedurl);
 			fadeIt();
+			fadeOutData();
 		}
 		
-		var movetimeout = false, sidebarTimeout = false, latestX;
+		var movetimeout = false, sidebarTimeout = false, latestX, triggerAreaWidth = 10;
 		function fadeIt(){
 			$image.css('opacity', 1);
 			
 			$body.on('mousemove',function(e){
-				$('#data').css('opacity','1');
+				if (document.getElementById('dialog'))
+					return true;
+				$data.css('opacity','1');
 				fadeOutData();
 				latestX = e.clientX;
-				if (sidebarTimeout === false && $('#settingsWrap').hasClass('open')){
-					if (!$('#settings').is(':hover'))
+				if (sidebarTimeout === false && $settingsWrap.hasClass('open')){
+					if (!$settings.is(':hover'))
 						setTimeout(function(){
-							if (!$('#settings').is(':hover'))
-								$('#settingsWrap').removeClass('open');
+							if (!$settings.is(':hover'))
+								$settingsWrap.removeClass('open');
 						},400);
 				}
-				else if (latestX <= 5)
+				else if (latestX <= triggerAreaWidth)
 					if (sidebarTimeout === false)
 						sidebarTimeout = setTimeout(function(){
-							if (latestX > 5){
+							if (latestX > triggerAreaWidth){
 								clearTimeout(sidebarTimeout);
 								sidebarTimeout = false;
 							}
-							
-							$('#settingsWrap').addClass('open');
+
+							$settingsWrap.addClass('open');
 							
 							setTimeout(function(){
 								clearTimeout(sidebarTimeout);
 								sidebarTimeout = false;
 							},500);
 						},200);
-			}).trigger('mousemove').blur(function(){
-				$('#settingsWrap.open').removeClass('open');
+			}).on('mouseleave',function(){
+				$settingsWrap.removeClass('open');
 			});
 		}
 		
@@ -326,18 +333,37 @@ $(function(){
 			var hideFunction = function(){
 				if (!$data.is(':hover'))
 					$data.css('opacity', 0);
-				else movetimeout = setTimeout(hideFunction, 4000);
+				else movetimeout = setTimeout(hideFunction, 2000);
 			};
 			if (movetimeout !== false){
 				clearTimeout(movetimeout);
 				movetimeout = false;
 			}
-			movetimeout = setTimeout(hideFunction, 4000);
+			movetimeout = setTimeout(hideFunction, 2000);
 		}
 	}
 	
 	function getCachedIMGURL(){
 		return LStorage.get("image_data");
+	}
+
+	// First run dialog
+	if (!LStorage.has('firstrun')){
+		$(document.createElement('div'))
+			.attr('id','dialog')
+			.html('<div id="dialog-inner"><h1>Welcome to Derpi New-Tab</h1><p>To access the settings, move your cursor to the left edge of the browser window.<br><span style="color:rgba(255,255,255,.5)">(this message is only displayed once)</span></p></div>')
+			.children()
+			.append($(document.createElement('button')).text('Got it').on('click',function(e){
+				e.preventDefault();
+
+				LStorage.set('firstrun',1);
+				var $dialog = $('#dialog');
+				$dialog.fadeOut(1000, function(){
+					$dialog.remove();
+				});
+			}))
+			.end()
+			.prependTo($body);
 	}
 		
 	// List textifier

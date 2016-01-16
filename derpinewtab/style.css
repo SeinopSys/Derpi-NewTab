@@ -4,15 +4,12 @@
 body, html, #image, #settingsWrap {
 	height:100%;
 	width: 100%;
-	margin: 0px;
+	margin: 0;
 }
 body {
-	background-position: center;
-	background-repeat: no-repeat;
-	background-size: 111px 28px;
-	background-image: url('loader.png');
 	font-family: Segoe UI, Verdana, Arial, sans-serif;
 	overflow: hidden;
+	background-image: url(loading.gif);
 }
 body, #image {
 	background-position: center;
@@ -38,55 +35,61 @@ body, #image {
 	background: linear-gradient(to top, rgba(0,0,0,.5) 0%, rgba(0,0,0,.675) 25%, rgba(0,0,0,.8) 100%);
 	border-top-left-radius: 20px;
 	box-shadow:
-		0px 0px 10px rgba(0,0,0,.5),
-		0px 0px 10px rgba(0,0,0,.5);
-	padding: 10px;
-	padding-bottom: 5px;
+		0 0 10px rgba(0,0,0,.5),
+		0 0 10px rgba(0,0,0,.5);
+	padding: 10px 10px 5px;
 	box-sizing: border-box;
 	
 	color: #fff;
 	text-shadow:
-		0px 0px 5px rgba(0,0,0,.4),
-		0px 0px 5px rgba(0,0,0,.4),
-		0px 0px 5px rgba(0,0,0,.4);
+		0 0 5px rgba(0,0,0,.4),
+		0 0 5px rgba(0,0,0,.4),
+		0 0 5px rgba(0,0,0,.4);
 	text-align: right;
 }
 #data h1 {
-	margin: 0px 0px 5px;
-	font-size: 22px;
-	line-height: 22px;
+	margin: 0 0 5px;
+	font-size: 20px;
+	line-height: 20px;
 	display: inline-block;
 }
 #data h1 a {
 	text-decoration: none;
 	color: #fff;
 	position: relative;
+	text-transform: uppercase;
+	font-variant: small-caps;
+	font-weight: normal;
+	line-height: .8em;
+	display: inline-block;
 }
 #data h1 a:after {
     content: '';
     display: block;
 	background-color: #fff;
 	height: 2px;
-	width: 102%;
+	width: 100%;
     opacity: 1;
 	position: absolute;
 	z-index: -1;
-	left: -1%;
-	top: 1.2em;
-	transition-property: height, background-color, top, border-radius;
+	left: 0;
+	top: .9em;
+	transition-property: height, background-color, top, left, width;
 	transition-duration: .2s;
 	transition-timing-function: linear;
 }
 #data h1 a:hover:after {
 	opacity: 1;
 	height: 1.4em;
-	top: .1em;
-	border-radius: 10px;
-	background-color: rgba(0,0,0,.7);
-	box-shadow: 0px 0px 5px rgba(0,0,0,.7);
+	top: -.3em;
+	left: -1%;
+	width: 102%;
+	border-radius: 3px;
+	background-color: rgba(0,0,0,.8);
+	box-shadow: 0 0 5px rgba(0,0,0,.8);
 }
 #data p {
-	margin: 0px;
+	margin: 0;
 }
 #data p:not(:last-child) {
 	margin-bottom: 5px;
@@ -97,21 +100,22 @@ body, #image {
 #settingsWrap {
 	position: absolute;
 	z-index: 3;
-	left: calc(-25% - 15px);
+	left: -25%;
 	width: 25%;
 	box-sizing: border-box;
 	padding: 10px;
 	
 	color: #fff;
+	box-shadow: 0;
 	
 	background: rgba(0,0,0,.8);
-	box-shadow: 0px 0px 10px rgba(0,0,0,.8);
 	
-	transition: left .6s cubic-bezier(0.165, 0.84, 0.44, 1);
+	transition: left .6s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow .6s linear;
 }
 #settingsWrap.open {
 	left: 0;
-	transition: left .2s cubic-bezier(0.165, 0.84, 0.44, 1);
+	box-shadow: 0 0 10px rgba(0,0,0,.8);
+	transition: left .2s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow .6s linear;
 }
 #settings {
 	height: 100%;
@@ -120,25 +124,25 @@ body, #image {
 #settings header {
 	font-size: 26px;
 	text-align: center;
-	margin: 0px 0px 10px;
+	margin: 0 0 10px;
 }
 #settings section:not(:last-child) {
 	margin-bottom: 10px;
 }
 #settings section h2 {
 	font-size: 20px;
-	margin: 0px 0px 5px;
+	margin: 0 0 5px;
 }
 #settings section p {
 	font-size: 14px;
-	margin: 0px;
+	margin: 0;
 }
 #settings section p:last-of-type {
 	margin-bottom: 10px;
 }
 
 #settings section .input {
-	font-size: 0px;
+	font-size: 0;
 }
 #settings section .input > * {
 	font-size: 16px;
@@ -152,7 +156,7 @@ body, #image {
 #settings section .input.systags label input ~ span {
 	cursor: pointer;
 	position: relative;
-	padding: 0px 3px 2px;
+	padding: 0 3px 2px;
 }
 #settings section .input.systags label:not(:last-child) input ~ span {
 	margin-right: 5px;
@@ -214,20 +218,19 @@ body, #image {
 }
 #settings section .input.showhide label input + span:after {
 	padding-left: 5px;
-	border-left: 2px solid;
 	content: "Show ";
 	color: #afa;
-	border-left-color: #afa;
+	border-left: 2px solid;
 }
 #settings section .input.showhide label input:not(:checked) + span:after {
 	content: "Hide ";
 	color: #faa;
-	border-left-color: #faa;
 }
 #settings section .input.selection select {
 	color: #aaf;
 	border: 0;
-	border-left: 2px solid #aaf;
+	border-left: 2px solid;
+	cursor: pointer;
 	background-color: transparent;
 	-webkit-appearance: none;
 	padding: 0 0 0 5px;
@@ -244,7 +247,7 @@ body, #image {
 #settings footer {
 	font-size: 12px;
 	text-align: center;
-	margin: 20px 0px 0px;
+	margin: 20px 0 0;
 }
 #settings footer,
 #settings footer a {
@@ -252,8 +255,60 @@ body, #image {
 }
 
 #tag-settings .re-request {
-	padding: 0px 5px;
-	margin: 5px 0px;
+	padding: 0 5px;
+	margin: 5px 0;
 	color: #ffa;
 	border-left: 2px solid;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px }
+::-webkit-scrollbar-button { display: none }
+::-webkit-scrollbar-thumb {
+	background-color: rgba(255,255,255,.9);
+	border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:active { background-color: #fff }
+
+/* First run dialog */
+#dialog {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 4;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	color: #fff;
+	background-color: rgba(0,0,0,.8);
+	cursor: default;
+	user-select: none;
+	-webkit-user-select: none;
+}
+#dialog-inner {
+	margin: auto;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	display: table;
+	height: auto;
+	width: 100%;
+	font-family: sans-serif;
+	font-size: 2em;
+}
+#dialog-inner button {
+	border: 0;
+	background: rgba(255,255,255,.1);
+	color: #fff;
+	border-radius: 5px;
+	font-size: 30px;
+	font-family: sans-serif;
+	padding: 10px;
+	cursor: pointer;
+
+	transition: background-color .2s linear;
+}
+#dialog-inner button:hover { background: rgba(255,255,255,.2) }
+#dialog-inner button:active { background: rgba(255,255,255,.4) }
