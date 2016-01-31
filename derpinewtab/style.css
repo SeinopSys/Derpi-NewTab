@@ -1,4 +1,3 @@
-@import url(metro-scrollbar.css);
 :focus{outline:0}
 
 body, html, #image, #settingsWrap {
@@ -11,6 +10,7 @@ body {
 	overflow: hidden;
 	background-image: url(loading.gif);
 }
+/*noinspection CssOptimizeSimilarProperties*/
 body, #image {
 	background-position: center;
 	background-repeat: no-repeat;
@@ -167,6 +167,7 @@ body, #image {
 #settings section .input.systags label input:not(:checked) ~ span {
 	color: #faa;
 }
+/*noinspection CssOptimizeSimilarProperties*/
 #settings section .input.systags label input ~ span:before {
 	content: "";
 	display: inline-block;
@@ -284,6 +285,14 @@ body, #image {
 	cursor: default;
 	user-select: none;
 	-webkit-user-select: none;
+
+    transition-property: transform, opacity;
+    transition-duration: .5s;
+    transition-timing-function: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+}
+#dialog.gtfo {
+	transform: scale(3);
+	opacity: 0;
 }
 #dialog-inner {
 	margin: auto;

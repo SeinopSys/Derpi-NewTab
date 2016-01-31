@@ -357,10 +357,10 @@ $(function(){
 				e.preventDefault();
 
 				LStorage.set('firstrun',1);
-				var $dialog = $('#dialog');
-				$dialog.fadeOut(1000, function(){
+				var $dialog = $('#dialog').addClass('gtfo');
+				setTimeout(function(){
 					$dialog.remove();
-				});
+				}, 550);
 			}))
 			.end()
 			.prependTo($body);
