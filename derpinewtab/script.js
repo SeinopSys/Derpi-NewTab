@@ -351,7 +351,7 @@ $(function(){
 	if (!LStorage.has('firstrun')){
 		$(document.createElement('div'))
 			.attr('id','dialog')
-			.html('<div id="dialog-inner"><h1>Welcome to Derpi New-Tab</h1><p>To access the settings, move your cursor to the left edge of the browser window.<br><span style="color:rgba(255,255,255,.5)">(this message is only displayed once)</span></p></div>')
+			.html('<div id="dialog-inner"><h1>Welcome to Derpi-New Tab</h1><p>To access the settings, move your cursor to the left edge of the browser window.<br><span style="color:rgba(255,255,255,.5)">(this message is only displayed once)</span></p></div>')
 			.children()
 			.append($(document.createElement('button')).text('Got it').on('click',function(e){
 				e.preventDefault();
