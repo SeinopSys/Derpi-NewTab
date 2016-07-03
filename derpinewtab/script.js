@@ -261,7 +261,7 @@ $(function(){
 			
 			var artistText = artists.length ? 'By '+textify(artists) : 'Artist unknown';
 			
-			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id_number+'">'+artistText+'</a></h1>');
+			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id+'">'+artistText+'</a></h1>');
 			
 			var votestr = '', cc = image.comment_count;
 			if (image.upvotes + image.downvotes === 0) votestr = 'no votes';
