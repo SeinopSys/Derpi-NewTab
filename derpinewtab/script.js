@@ -2,6 +2,12 @@
 $(function(){
 	'use strict';
 
+	$.getJSON('manifest.json',function(data){
+		if (!data) return;
+
+		$('#disp-version').text(' v'+data.version);
+	});
+
 	//Setting check
 	var settings = {
 			allowedTags: [],

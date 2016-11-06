@@ -254,6 +254,9 @@ body, #image {
 #settings footer a {
 	color: rgba(255,255,255,.5);
 }
+#settings footer #disp-version:empty {
+	display: none;
+}
 
 #tag-settings .re-request {
 	padding: 0 5px;
