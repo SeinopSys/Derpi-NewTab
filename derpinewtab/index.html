@@ -14,9 +14,21 @@
 		<section id="tag-settings">
 			<h2>Allowed system tags</h2>
 			<p>Set the system tags you want to allow when requesting images.</p>
-			<p>Your active filter does not affect the search results, which means that you may see images having tags which you've hidden.</p>
 			<div class="input systags"></div>
-			<p class="re-request" style="display: none">The image will be updated in <span></span> to reflect tag preferece changes.</p>
+
+			<h2>Filtering</h2>
+			<p>By default search results use the <a href="https://derpibooru.org/filters/56027" target="_blank">"Everything" filter</a>, which means that you may see images having tags which you've hidden.</p>
+			<p>To use a specific filter for fetching images, turn on the option below, then <span id="signin-filter">select from your filters or</span> enter its ID.</p>
+			<div class="input usefilter">
+				<label><input type="checkbox" name="usefilter"><span></span> a custom filter</label>
+			</div>
+			<input type="number" id="filter-id" step="1" min="1" class="hidden">
+			<select id="filter-id-select">
+				<option value="" selected style="display:none">Choose your filter</option>
+				<option value="???" style="display:none">(foreign filter)</option>
+			</select>
+			<p>Keep in mind that you still need to enable system tags you wish to see ragardless of your filter setting.</p>
+			<p class="re-request" style="display: none">The image will be updated in <span></span> to reflect the changes.</p>
 		</section>
 		<section id="metadata-settings">
 			<h2>Metadata</h2>
@@ -41,6 +53,7 @@
 	</div>
 </div>
 <div id="image"></div>
+<div id="image-ghost"></div>
 <div id="data"></div>
 <script src="jquery.js"></script>
 <script src="LStorage.min.js"></script>

@@ -13,7 +13,9 @@ $(function(){
 			allowedTags: [],
 			metadata: {},
 			crop: undefined,
+			filterID: undefined,
 		},
+		everythingFilterID = 56027,
 		$settingsWrap = $('#settingsWrap'),
 		$settings = $('#settings'),
 		$tagSettings = $('#tag-settings'),
@@ -21,10 +23,50 @@ $(function(){
 		$metaSettings = $('#metadata-settings'),
 		$cropSettings = $('#crop-settings'),
 		$image = $('#image'),
+		$imageGhost = $('#image-ghost'),
 		$data = $('#data'),
 		$style = $('#style'),
+		$filterID = $('#filter-id'),
+		$filterIDSelect = $('#filter-id-select'),
+		$signinFilter = $('#signin-filter'),
+		$usefilterInput = $tagSettings.find('.usefilter input'),
 		_currentImageURL;
-	//	Tag settings
+
+	$.get('https://derpibooru.org/filters',function(data){
+		var $data = $(data.replace(/src="[^"]+?"/g,'')),
+			$optg = {
+				your: $(document.createElement('optgroup')).attr('label','My Filters'),
+				global: $(document.createElement('optgroup')).attr('label','Global Filters'),
+			},
+			userpage = $data.find('.header__link.header__link-user').attr('href');
+
+		if (!userpage){
+			$signinFilter.addClass('nope').attr('title','You must be signed in on Derpibooru.org to see your own filters.');
+		}
+
+		$data.find('.filter').each(function(){
+			var $filter = $(this),
+				name = $filter.children('h3').text(),
+				id = parseInt($filter.children('.filter-options').find('a[href^="/filters/"]').attr('href').replace(/\D/g,''), 10);
+
+			if (id === everythingFilterID)
+				return;
+
+			$optg[$filter.find('a[href="'+userpage+'"]').length ? 'your' : 'global'].append($(document.createElement('option')).attr('value',id).text(name));
+		});
+
+		if ($optg.your.children().length)
+			$filterIDSelect.append($optg.your);
+		$filterIDSelect.append($optg.global);
+		if (settings.filterID){
+			if ($filterIDSelect.find('option[value="'+settings.filterID+'"]').length)
+				$filterIDSelect.val(settings.filterID);
+			else $filterIDSelect.val('???');
+		}
+		else $filterIDSelect.val('');
+	});
+
+	// Tag settings
 	(function TagSettings(){
 		var possibleTags = ['safe','suggestive','questionable','explicit'],
 			tagselectTimeout, tagselectCountdownInterval;
@@ -53,9 +95,7 @@ $(function(){
 				)
 			);
 		});
-		$settings.find('.systags label span').on('click',function(e){
-			e.preventDefault();
-			
+		function tagSelectCountdownStarter(){
 			if (typeof tagselectTimeout === 'number'){
 				clearInterval(tagselectTimeout);
 				//noinspection JSUnusedAssignment
@@ -65,41 +105,96 @@ $(function(){
 				clearInterval(tagselectCountdownInterval);
 				tagselectCountdownInterval = undefined;
 			}
-			
+
 			var i = 6,
 				tagSelectCountdown = function(){
 					if (--i === 0) return clearInterval(tagselectCountdownInterval);
-					
+
 					var $elem = $tagSettings.find('.re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
 					if (!$elem.is(':visible')) $elem.stop().hide().slideDown();
 				},
-				$this = $(this),
-				$thisInput = $this.prev(),
 				tagArray = [];
-			
-			$thisInput.prop('checked',!$thisInput.prop('checked'));
-			
+
 			tagselectCountdownInterval = setInterval(tagSelectCountdown,1000);
 			tagSelectCountdown();
 			tagselectTimeout = setTimeout(function(){
-				$this.parent().parent().children().each(function(i,el){
+				$systags.children().each(function(i,el){
 					var $input = $(el).find('input'),
 						tag = $input.attr('name');
 					if ($input.prop('checked'))
 						tagArray.push(tag);
 				});
-				
-				if (tagArray.length > 0){
+
+				var tagsCond = tagArray.length > 0,
+					val = parseInt($filterID.val(), 10),
+					filterCond = !isNaN(val);
+
+				if (tagsCond){
 					settings.allowedTags = tagArray;
 					LStorage.set('setting_allowed_tags',tagArray.join(','));
-					
+				}
+				if (filterCond){
+					settings.filterID = val;
+					LStorage.set('setting_filterid',settings.filterID);
+				}
+				else {
+					$usefilterInput.prop('checked', false);
+					$filterID.addClass('hidden');
+					settings.filterID = undefined;
+					LStorage.del('setting_filterid');
+				}
+				if (tagsCond || filterCond){
 					$image.css('opacity','0');
+					$imageGhost.css('opacity','0');
 					$settingsWrap.removeClass('open');
 					$body.off('mousemove');
-					
+
 					setTimeout(reQuest,300);
 				}
 			}, 5000);
+		}
+		$settings.find('.systags label span').on('click',function(e){
+			e.preventDefault();
+
+			var $thisInput = $(this).prev();
+			$thisInput.prop('checked',!$thisInput.prop('checked'));
+
+			tagSelectCountdownStarter();
+		});
+
+		if (LStorage.has('setting_filterid')){
+			var filterid = parseInt(LStorage.get('setting_filterid'), 10);
+			if (isNaN(filterid))
+				LStorage.del('setting_filterid');
+			else {
+				settings.filterID = filterid;
+				$usefilterInput.prop('checked', true);
+				$filterID.val(settings.filterID).removeClass('hidden');
+			}
+		}
+		if (settings.allowedTags.length === 0){
+			LStorage.set('setting_allowed_tags','safe');
+			settings.allowedTags = ['safe'];
+		}
+		$usefilterInput.on('click',function(e){
+			var $this = $(this),
+				checked = $this.prop('checked');
+
+			$filterID[checked?'removeClass':'addClass']('hidden');
+			if (!checked)
+				$filterID.val('').triggerHandler('change');
+		});
+		$filterIDSelect.on('change keyup',function(){
+			var val = $filterIDSelect.val();
+			if (val && /^\d+$/.test(val))
+				$filterID.val(val).triggerHandler('change');
+		});
+		$filterID.on('change keyup',function(){
+			if ($filterIDSelect.find('option[value="'+$filterID.val()+'"]').length)
+				$filterIDSelect.val($filterID.val());
+			else $filterIDSelect.val('???');
+			if ($filterID.val() !== settings.filterID)
+				tagSelectCountdownStarter();
 		});
 	})();
 	// Metadata settings
@@ -191,26 +286,32 @@ $(function(){
 			_currentImageURL = image_url;
 		else if (typeof _currentImageURL !== 'string')
 			return;
-		$style.html('#image{background-image:url("'+_currentImageURL.replace(/"/g, '%22')+'");background-size:'+settings.crop+'}');
+		var url = _currentImageURL.replace(/"/g, '%22'),
+			styles = '#image{background-image:url("'+url+'");background-size:'+settings.crop+'}';
+		if (settings.crop === 'contain'){
+			$imageGhost.css('opacity','');
+			styles += '#image-ghost{display:block;background-image:url("'+url+'")}';
+		}
+
+		$style.html(styles);
 	}
 
-	setTimeout(function(){
-		// Begin site
-		if (LStorage.has("image_data") && LStorage.has("image_hash")){
-			setBackgroundStyles(LStorage.get("image_data"));
-			$image.css('opacity','1').attr('data-hash',LStorage.get('image_hash'));
-		}
-		
-		reQuest();
-	},1);
-	
+	// Begin site
+	if (LStorage.has("image_data") && LStorage.has("image_hash")){
+		setBackgroundStyles(LStorage.get("image_data"));
+		$image.css('opacity','1').attr('data-hash',LStorage.get('image_hash'));
+	}
+
+	reQuest();
+
 	$data.html('<h1>Requesting metadata...</h1>').css('opacity', 1);
 	function reQuest(page){
+		$body.removeClass('notloading');
 		$tagSettings.find('.re-request:visible').slideUp();
 		
 		$.ajax({
-			url: 'https://derpibooru.org/search.json'+
-			        '?filter_id=56027'+ // "Everything" filter
+			url: 'https://trixiebooru.org/search.json'+
+			        '?filter_id='+(settings.filterID||everythingFilterID)+
 			        '&q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+
 			        (typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
@@ -220,6 +321,7 @@ $(function(){
 				
 				if (data.length === 0) {
 					fadeIt();
+					$body.addClass('notloading');
 					$data.html('<h1>Search returned no results.</h1>' + (settings.allowedTags.indexOf('safe') === -1 ? '<p>Try enabling the safe system tag.</p>' : ''));
 					return;
 				}
@@ -231,6 +333,7 @@ $(function(){
 						break;
 					}
 				}
+				$body.addClass('notloading');
 				
 				if (typeof image === 'undefined')
 					return reQuest(typeof page === 'number' ? page+1 : 2);
@@ -253,6 +356,10 @@ $(function(){
 					});
 				}
 				else metadata(image, getCachedIMGURL());
+			},
+			error: function(){
+				$body.addClass('notloading');
+				$data.html('<h1>There was an error while fetching the image data</h1><p>'+(navigator.onLine ? 'Derpibooru may be down for maintenance, try again later.' : 'You are not conected to the Internet.')+'</p>');
 			}
 		});
 		
@@ -298,10 +405,10 @@ $(function(){
 			fadeOutData();
 		}
 		
-		var movetimeout = false, sidebarTimeout = false, latestX, triggerAreaWidth = 10;
+		var movetimeout = false, sidebarTimeout = false, latestX, triggerAreaWidth = 20;
 		function fadeIt(){
 			$image.css('opacity', 1);
-			
+
 			$body.on('mousemove',function(e){
 				if (document.getElementById('dialog'))
 					return true;
