@@ -3,4 +3,4 @@
 
 A simplistic "New tab" page replacement for Google Chrome, which features pony wallpapers from [Derpibooru.org](http://derpibooru.org/).
 
-<p align="center"><a href="https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_Badge_v2_340x96.png" alt="Download Derpi-New Tab from the Chrome Web Store"></a></p>
+<p align="center"><a href="https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" alt="Download Derpi-New Tab from the Chrome Web Store"></a></p>
