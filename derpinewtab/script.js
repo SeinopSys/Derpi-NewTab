@@ -418,7 +418,7 @@ $(function(){
 				if (sidebarTimeout === false && $settingsWrap.hasClass('open')){
 					if (!$settings.is(':hover'))
 						setTimeout(function(){
-							if (!$settings.is(':hover'))
+							if (!$settingsWrap.is(':hover'))
 								$settingsWrap.removeClass('open');
 						},400);
 				}
