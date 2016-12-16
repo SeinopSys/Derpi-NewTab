@@ -9,7 +9,7 @@ $(function(){
 	});
 
 	//Setting check
-	var settings = {
+	let settings = {
 			allowedTags: [],
 			metadata: {},
 			crop: undefined,
@@ -24,16 +24,18 @@ $(function(){
 		$cropSettings = $('#crop-settings'),
 		$image = $('#image'),
 		$imageGhost = $('#image-ghost'),
+		$fadeLayer = $('#fade-layer'),
 		$data = $('#data'),
 		$style = $('#style'),
 		$filterID = $('#filter-id'),
 		$filterIDSelect = $('#filter-id-select'),
 		$signinFilter = $('#signin-filter'),
 		$usefilterInput = $tagSettings.find('.usefilter input'),
+		$showSettingsButton = $('#show-settings-button'),
 		_currentImageURL;
 
 	$.get('https://derpibooru.org/filters',function(data){
-		var $data = $(data.replace(/src="[^"]+?"/g,'')),
+		let $data = $(data.replace(/src="[^"]+?"/g,'')),
 			$optg = {
 				your: $(document.createElement('optgroup')).attr('label','My Filters'),
 				global: $(document.createElement('optgroup')).attr('label','Global Filters'),
@@ -45,7 +47,7 @@ $(function(){
 		}
 
 		$data.find('.filter').each(function(){
-			var $filter = $(this),
+			let $filter = $(this),
 				name = $filter.children('h3').text(),
 				id = parseInt($filter.children('.filter-options').find('a[href^="/filters/"]').attr('href').replace(/\D/g,''), 10);
 
@@ -68,10 +70,10 @@ $(function(){
 
 	// Tag settings
 	(function TagSettings(){
-		var possibleTags = ['safe','suggestive','questionable','explicit'],
+		let possibleTags = ['safe','suggestive','questionable','explicit'],
 			tagselectTimeout, tagselectCountdownInterval;
 		if (LStorage.has('setting_allowed_tags')){
-			var setTags = LStorage.get('setting_allowed_tags').split(',');
+			let setTags = LStorage.get('setting_allowed_tags').split(',');
 			$.each(setTags,function(i,el){
 				if (possibleTags.indexOf(el) > -1)
 					settings.allowedTags.push(el);
@@ -82,7 +84,7 @@ $(function(){
 			LStorage.set('setting_allowed_tags','safe');
 			settings.allowedTags = ['safe'];
 		}
-		var $systags = $settings.find('.systags');
+		let $systags = $settings.find('.systags');
 		$.each(possibleTags,function(i,el){
 			$systags.append(
 				$(document.createElement('label')).append(
@@ -106,11 +108,11 @@ $(function(){
 				tagselectCountdownInterval = undefined;
 			}
 
-			var i = 6,
+			let i = 6,
 				tagSelectCountdown = function(){
 					if (--i === 0) return clearInterval(tagselectCountdownInterval);
 
-					var $elem = $tagSettings.find('.re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
+					let $elem = $tagSettings.find('.re-request span').text(i+' second'+(i !== 1 ? 's':'')).parent();
 					if (!$elem.is(':visible')) $elem.stop().hide().slideDown();
 				},
 				tagArray = [];
@@ -119,13 +121,13 @@ $(function(){
 			tagSelectCountdown();
 			tagselectTimeout = setTimeout(function(){
 				$systags.children().each(function(i,el){
-					var $input = $(el).find('input'),
+					let $input = $(el).find('input'),
 						tag = $input.attr('name');
 					if ($input.prop('checked'))
 						tagArray.push(tag);
 				});
 
-				var tagsCond = tagArray.length > 0,
+				let tagsCond = tagArray.length > 0,
 					val = parseInt($filterID.val(), 10),
 					filterCond = !isNaN(val);
 
@@ -139,15 +141,13 @@ $(function(){
 				}
 				else {
 					$usefilterInput.prop('checked', false);
-					$filterID.addClass('hidden');
 					settings.filterID = undefined;
 					LStorage.del('setting_filterid');
 				}
 				if (tagsCond || filterCond){
 					$image.css('opacity','0');
 					$imageGhost.css('opacity','0');
-					$settingsWrap.removeClass('open');
-					$body.off('mousemove');
+					unbindHandlers();
 
 					setTimeout(reQuest,300);
 				}
@@ -156,50 +156,56 @@ $(function(){
 		$settings.find('.systags label span').on('click',function(e){
 			e.preventDefault();
 
-			var $thisInput = $(this).prev();
+			let $thisInput = $(this).prev();
 			$thisInput.prop('checked',!$thisInput.prop('checked'));
 
 			tagSelectCountdownStarter();
 		});
 
 		if (LStorage.has('setting_filterid')){
-			var filterid = parseInt(LStorage.get('setting_filterid'), 10);
+			let filterid = parseInt(LStorage.get('setting_filterid'), 10);
 			if (isNaN(filterid))
 				LStorage.del('setting_filterid');
 			else {
 				settings.filterID = filterid;
 				$usefilterInput.prop('checked', true);
-				$filterID.val(settings.filterID).removeClass('hidden');
+				$filterID.val(settings.filterID).trigger('change');
 			}
 		}
 		if (settings.allowedTags.length === 0){
 			LStorage.set('setting_allowed_tags','safe');
 			settings.allowedTags = ['safe'];
 		}
-		$usefilterInput.on('click',function(e){
-			var $this = $(this),
+		$usefilterInput.on('click',function(){
+			let $this = $(this),
 				checked = $this.prop('checked');
 
-			$filterID[checked?'removeClass':'addClass']('hidden');
 			if (!checked)
-				$filterID.val('').triggerHandler('change');
+				$filterID.val('').trigger('change');
 		});
 		$filterIDSelect.on('change keyup',function(){
-			var val = $filterIDSelect.val();
-			if (val && /^\d+$/.test(val))
-				$filterID.val(val).triggerHandler('change');
+			let val = $filterIDSelect.val();
+			if (val && /^\d+$/.test(val)){
+				if ($usefilterInput.prop('checked') !== true)
+					$usefilterInput.prop('checked', true);
+				$filterID.val(val).trigger('change');
+			}
 		});
 		$filterID.on('change keyup',function(){
 			if ($filterIDSelect.find('option[value="'+$filterID.val()+'"]').length)
 				$filterIDSelect.val($filterID.val());
 			else $filterIDSelect.val('???');
-			if ($filterID.val() !== settings.filterID)
+			if (!$filterID.is(':valid'))
+				return;
+
+			let currFilter = settings.filterID ? settings.filterID : '';
+			if ($filterID.val() !== currFilter)
 				tagSelectCountdownStarter();
 		});
 	})();
 	// Metadata settings
 	(function MatadataSettings(){
-		var $inputs = $metaSettings.find('.input.showhide input'), keys;
+		let $inputs = $metaSettings.find('.switch input'), keys;
 		$inputs.each(function(){
 			settings.metadata[this.name] = false;
 		});
@@ -237,10 +243,10 @@ $(function(){
 			this.checked = !!settings.metadata[this.name];
 			$(this).prop('checked',this.checked);
 		});
-		$metaSettings.find('.input.showhide label input').on('click',function(e){
+		$metaSettings.find('.switch input').on('click',function(e){
 			e.stopPropagation();
 			
-			var nameAttr = this.name,
+			let nameAttr = this.name,
 				attrIndx = keys.indexOf(nameAttr);
 			
 			if (attrIndx === -1) keys.push(nameAttr);
@@ -251,16 +257,16 @@ $(function(){
 	})();
 	// Image cropping settings
 	(function ImageCroppingSettings(){
-		var $select = $cropSettings.find('.input.selection select');
+		let $select = $cropSettings.find('.input-field select');
 
 		if (!LStorage.has('setting_crop')){
-			settings.crop = 'cover';
+			settings.crop = 'contain';
 			LStorage.set('setting_crop', settings.crop);
 		}
 		else settings.crop = LStorage.get('setting_crop');
 
 		function updateCroppingSettings(){
-			var setTo = settings.crop;
+			let setTo = settings.crop;
 			if (['contain','cover','100% 100%'].indexOf(setTo) === -1)
 				setTo = 'cover';
 
@@ -286,7 +292,7 @@ $(function(){
 			_currentImageURL = image_url;
 		else if (typeof _currentImageURL !== 'string')
 			return;
-		var url = _currentImageURL.replace(/"/g, '%22'),
+		let url = _currentImageURL.replace(/"/g, '%22'),
 			styles = '#image{background-image:url("'+url+'");background-size:'+settings.crop+'}';
 		if (settings.crop === 'contain'){
 			$imageGhost.css('opacity','');
@@ -315,7 +321,7 @@ $(function(){
 			        '&q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls'+
 			        (typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
-				var image, imgElement = new Image(), i = -1;
+				let image, imgElement = new Image(), i = -1;
 				
 				data = data.search;
 				
@@ -343,13 +349,13 @@ $(function(){
 						$data.html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
 					imgElement.src = 'http://'+image.image;
-					$(imgElement).load(function(){
+					$(imgElement).on('load',function(){
 						// Save image into localStorage
 						LStorage.set("image_data", imgElement.src);
 						LStorage.set("image_hash", image.sha512_hash);
 						
 						metadata(image, imgElement.src);
-					}).error(function(){
+					}).on('error', function(){
 						$data.html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
 						fadeIt();
 						return reQuest(typeof page === 'number' ? page+1 : 2);
@@ -364,7 +370,7 @@ $(function(){
 		});
 		
 		function metadata(image,cachedurl){
-			var tags = image.tags.split(', '),
+			let tags = image.tags.split(', '),
 				artists = [];
 			
 			$.each(tags,function(i,el){
@@ -372,11 +378,19 @@ $(function(){
 					artists.push(el.substring(7));
 			});
 			
-			var artistText = artists.length ? 'By '+textify(artists) : 'Artist unknown';
+			let artistText = artists.length ? 'By '+textify(artists) : 'Artist unknown';
 			
 			$data.empty().append('<h1><a href="https://derpibooru.org/'+image.id+'">'+artistText+'</a></h1>');
+
+			$data.children('h1').simplemarquee({
+			    speed: 25,
+			    cycles: Infinity,
+			    space: 25,
+			    handleHover: false,
+			    delayBetweenCycles: 0,
+			});
 			
-			var votestr = '', cc = image.comment_count;
+			let votestr = '', cc = image.comment_count;
 			if (image.upvotes + image.downvotes === 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
@@ -391,11 +405,11 @@ $(function(){
 			}
 			
 			$data.append(
-				'<p>'+
-				'	<span class="uploadtime visible">uploaded <time datetime="'+image.created_at+'"></time> by '+image.uploader+'</span>'+
-				'	<span class="votes">'+votestr+'</span>'+
-				'	<span class="comments">'+(cc>0?cc:'no')+' comment'+(cc!==1?'s':'')+'</span>'+
-				'</p>'
+				`<p>
+					<span class="uploadtime visible">uploaded <time datetime="${image.created_at}"></time> by ${image.uploader}</span>
+					<span class="votes">${votestr}</span>
+					<span class="comments">${cc>0?cc:'no'} comment${cc!==1?'s':''}</span>
+				</p>`
 			);
 			updateMetadataSettings();
 			window.updateTimesF();
@@ -405,55 +419,50 @@ $(function(){
 			fadeOutData();
 		}
 		
-		var movetimeout = false, sidebarTimeout = false, latestX, triggerAreaWidth = 20;
+		let movetimeout = false,
+			hideFunction = function(){
+				if (!$fadeLayer.children('.hover').length)
+					$fadeLayer.css('opacity', 0);
+				else movetimeout = setTimeout(hideFunction, 2000);
+			};
 		function fadeIt(){
 			$image.css('opacity', 1);
 
-			$body.on('mousemove',function(e){
+			$body.on('mousemove',$.throttle(100,function(){
 				if (document.getElementById('dialog'))
 					return true;
-				$data.css('opacity','1');
+				$fadeLayer.css('opacity','1');
+				$fadeLayer.on('mouseenter','> *',function(){
+					$(this).addClass('hover');
+				}).on('mouseleave','> *',function(){
+					$(this).removeClass('hover');
+				});
 				fadeOutData();
-				latestX = e.clientX;
-				if (sidebarTimeout === false && $settingsWrap.hasClass('open')){
-					if (!$settings.is(':hover'))
-						setTimeout(function(){
-							if (!$settingsWrap.is(':hover'))
-								$settingsWrap.removeClass('open');
-						},400);
-				}
-				else if (latestX <= triggerAreaWidth)
-					if (sidebarTimeout === false)
-						sidebarTimeout = setTimeout(function(){
-							if (latestX > triggerAreaWidth){
-								clearTimeout(sidebarTimeout);
-								sidebarTimeout = false;
-							}
+			}));
+			$body.triggerHandler('mousemove');
+			$showSettingsButton.attr('disabled', false).on('click',function(e){
+				e.preventDefault();
 
-							$settingsWrap.addClass('open');
-							
-							setTimeout(function(){
-								clearTimeout(sidebarTimeout);
-								sidebarTimeout = false;
-							},500);
-						},200);
-			}).on('mouseleave',function(){
-				$settingsWrap.removeClass('open');
+				$settingsWrap.toggleClass('open');
+				$body.triggerHandler('mousemove');
 			});
 		}
 		
 		function fadeOutData(){
-			var hideFunction = function(){
-				if (!$data.is(':hover'))
-					$data.css('opacity', 0);
-				else movetimeout = setTimeout(hideFunction, 2000);
-			};
 			if (movetimeout !== false){
 				clearTimeout(movetimeout);
+				//noinspection JSUnusedAssignment
 				movetimeout = false;
 			}
-			movetimeout = setTimeout(hideFunction, 2000);
+			if (!$settingsWrap.hasClass('open'))
+				movetimeout = setTimeout(hideFunction, 2000);
 		}
+	}
+
+	function unbindHandlers(){
+		$body.off('mousemove');
+		$showSettingsButton.off('click').attr('disabled', true);
+		$settingsWrap.removeClass('open');
 	}
 	
 	function getCachedIMGURL(){
@@ -470,7 +479,7 @@ $(function(){
 				e.preventDefault();
 
 				LStorage.set('firstrun',1);
-				var $dialog = $('#dialog').addClass('gtfo');
+				let $dialog = $('#dialog').addClass('gtfo');
 				setTimeout(function(){
 					$dialog.remove();
 				}, 550);
@@ -478,18 +487,20 @@ $(function(){
 			.end()
 			.prependTo($body);
 	}
+
+    $cropSettings.find('select').material_select();
 		
 	// List textifier
 	function textify(list, append, separator){
 		if (typeof append === 'undefined') append = 'and';
 		if (typeof separator === 'undefined') separator = ',';
 
-		var list_str;
+		let list_str;
 		
 		if (typeof list === 'string') list = list.split(separator);
 		if (list.length > 1){
 			list_str = list;
-			var list_str_len = list_str.length,
+			let list_str_len = list_str.length,
 				maxDest = list_str_len-3,
 				i = 0;
 			list_str.splice(list_str_len-1,0,append);

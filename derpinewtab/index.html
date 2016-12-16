@@ -1,64 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Derpi-New Tab</title>
-<link rel="stylesheet" href="style.css">
-<style id="style"></style>
 <meta charset="utf-8">
+<title>Derpi-New Tab</title>
+<link rel="stylesheet" href="css/style.css">
+<style id="style"></style>
 </head>
 <body>
 
 <div id="settingsWrap">
 	<div id="settings">
 		<header>Settings</header>
-		<section id="tag-settings">
-			<h2>Allowed system tags</h2>
-			<p>Set the system tags you want to allow when requesting images.</p>
-			<div class="input systags"></div>
-
-			<h2>Filtering</h2>
-			<p>By default search results use the <a href="https://derpibooru.org/filters/56027" target="_blank">"Everything" filter</a>, which means that you may see images having tags which you've hidden.</p>
-			<p>To use a specific filter for fetching images, turn on the option below, then <span id="signin-filter">select from your filters or</span> enter its ID.</p>
-			<div class="input usefilter">
-				<label><input type="checkbox" name="usefilter"><span></span> a custom filter</label>
-			</div>
-			<input type="number" id="filter-id" step="1" min="1" class="hidden">
-			<select id="filter-id-select">
-				<option value="" selected style="display:none">Choose your filter</option>
-				<option value="???" style="display:none">(foreign filter)</option>
-			</select>
-			<p>Keep in mind that you still need to enable system tags you wish to see ragardless of your filter setting.</p>
-			<p class="re-request" style="display: none">The image will be updated in <span></span> to reflect the changes.</p>
-		</section>
-		<section id="metadata-settings">
-			<h2>Metadata</h2>
-			<p>Choose what information you want to see in the bottom right corner.</p>
-			<div class="input showhide">
-				<label><input type="checkbox" name="showvotes"><span></span> votes</label>
-				<label><input type="checkbox" name="showcomments"><span></span> comment count</label>
-			</div>
-		</section>
-		<section id="crop-settings">
-			<h2>Image cropping</h2>
-			<p>This setting allows you to modify how images are displayed.</p>
-			<div class="input selection">
-				<select>
-					<option value="cover">Cover the window</option>
-					<option value="contain">Fit inside window</option>
-					<option value="100% 100%">Stretch to fit</option>
-				</select>
-			</div>
-		</section>
+        <ul class="collapsible" data-collapsible="accordion">
+		    <li id="tag-settings">
+				<div class="collapsible-header">Filtering</div>
+				<div class="collapsible-body">
+					<h2>System tags</h2>
+					<p>Set the system tags you want to allow when requesting images. Click to toggle.</p>
+					<div class="input systags"></div>
+					<br>
+					<h2>Custom filter</h2>
+					<p>By default search results use the <a href="https://derpibooru.org/filters/56027" target="_blank">"Everything" filter</a>, which means that you may see images having tags which you've hidden.</p>
+					<p>To use a specific filter for fetching images, turn on the option below, then <span id="signin-filter">select from your filters or</span> enter its ID.</p>
+					<div class="usefilter switch">
+						<label>
+							<input type="checkbox" name="usefilter">
+							<span class="lever"></span> Use a custom filter
+						</label>
+					</div>
+					<div class="row">
+						<div class="input-field">
+							<input type="number" id="filter-id" step="1" min="1" class="validate">
+                            <label for="filter-id">Filter ID</label>
+						</div>
+					</div>
+					<select id="filter-id-select"class="browser-default">
+						<option value="" selected style="display:none">Choose your filter</option>
+						<option value="???" style="display:none">(foreign filter)</option>
+					</select>
+					<p>Keep in mind that you still need to enable system tags you wish to see ragardless of your filter setting.</p>
+					<div class="re-request" style="display: none">The image will be updated in <span></span> to reflect the changes.</div>
+				</div>
+		    </li>
+		    <li id="metadata-settings">
+				<div class="collapsible-header">Metadata</div>
+				<div class="collapsible-body">
+					<p>Choose what information you want to see in the bottom right corner.</p>
+					<div class="switch">
+						<label>
+							<input type="checkbox" name="showvotes">
+							<span class="lever"></span> Show votes
+						</label>
+					</div>
+					<div class="switch">
+						<label>
+							<input type="checkbox" name="showcomments">
+							<span class="lever"></span> Show comment count
+						</label>
+					</div>
+				</div>
+		    </li>
+		    <li id="crop-settings">
+				<div class="collapsible-header">Image cropping</div>
+				<div class="collapsible-body">
+					<p>This setting allows you to modify how the image is displayed if its size differs from the browser's size (which happens most of the time).</p>
+		            <div class="input-field col s12">
+						<select>
+							<option value="cover" data-icon="/img/ui-cover-window.svg">Cover the window</option>
+							<option value="contain" data-icon="/img/ui-fit-window.svg">Fit inside window</option>
+							<option value="100% 100%" data-icon="/img/ui-stretch-window.svg">Stretch to fit</option>
+						</select>
+					</div>
+				</div>
+		    </li>
+        </ul>
 		<footer>Derpi-New Tab<span id="disp-version"></span><br>by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp; <a href="https://github.com/ponydevs/Derpi-NewTab/graphs/contributors">contributors</a><br><a href="https://github.com/ponydevs/Derpi-NewTab">View source code</a></footer>
 	</div>
 </div>
+<!-- Main image element -->
 <div id="image"></div>
+<!-- Ghost image element (e.g. for "fit inside window" cropping option) -->
 <div id="image-ghost"></div>
-<div id="data"></div>
-<script src="jquery.js"></script>
-<script src="LStorage.min.js"></script>
-<script src="dyntime.js"></script>
-<script src="script.js"></script>
+<!-- Contains elements that will face out on a timer -->
+<div id="fade-layer">
+	<div id="data" class="z-depth-2"></div>
+	<a id="show-settings-button" class="btn-floating btn-large waves-effect waves-light"><i class="material-icons">menu</i></a>
+</div>
+
+<script src="js/jquery.js"></script>
+<script src="js/LStorage.min.js"></script>
+<script src="js/dyntime.js"></script>
+<script src="js/materialize.min.js"></script>
+<script src="js/jquery.ba-throttle-debounce.min.js"></script>
+<script src="js/jquery.simplemarquee.js"></script>
+<script src="js/script.js"></script>
 
 </body>
 </html>
