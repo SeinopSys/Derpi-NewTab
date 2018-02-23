@@ -344,11 +344,11 @@ $(function(){
 				if (typeof image === 'undefined')
 					return reQuest(typeof page === 'number' ? page+1 : 2);
 				
-				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
+				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.orig_sha512_hash){
 					if (typeof page === 'undefined')
 						$data.html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
-					imgElement.src = 'http://'+image.image;
+					imgElement.src = 'https:'+image.pretty_url;
 					$(imgElement).on('load',function(){
 						// Save image into localStorage
 						LStorage.set("image_data", imgElement.src);
@@ -356,7 +356,9 @@ $(function(){
 						
 						metadata(image, imgElement.src);
 					}).on('error', function(){
-						$data.html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
+						if (!image.is_rendered)
+							$data.html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
+						else $data.html('<h1>Image failed to load</h1><p>Either the image is no longer available or the extension is broken</p>');
 						fadeIt();
 						return reQuest(typeof page === 'number' ? page+1 : 2);
 					});

@@ -1,81 +1,38 @@
 // jshint ignore: start
-var cl = console.log,
-	stripAnsi = require('strip-ansi'),
-	chalk = require('chalk');
-console.log = console.writeLine = function () {
-	var args = [].slice.call(arguments);
-	if (args.length){
-		if (/^(\[\d{2}:\d{2}:\d{2}]|Using|Finished)/.test(args[0]))
-			return;
-		else if (args[0] == 'Starting'){
-			args = ['[' + chalk.green('gulp') + '] ' + stripAnsi(args[1]).replace(/^'(.*)'.*$/,'$1') + ': ' + chalk.magenta('start')];
-		}
+const
+	chalk = require('chalk'),
+	gulp = require('gulp'),
+	sourcemaps = require('gulp-sourcemaps'),
+	plumber = require('gulp-plumber'),
+	sass = require('gulp-sass'),
+	autoprefixer = require('gulp-autoprefixer'),
+	cleanCss = require('gulp-clean-css'),
+	uglify = require('gulp-uglify'),
+	babel = require('gulp-babel'),
+	cached = require('gulp-cached'),
+	workingDir = __dirname;
+
+class Logger {
+	constructor(prompt){
+		this.prefix = '['+chalk.blue(prompt)+'] ';
 	}
-	return cl.apply(console, args);
-};
-var stdoutw = process.stdout.write;
-process.stdout.write = console.write = function(str){
-	var out = [].slice.call(arguments).join(' ');
-	if (/\[.*?\d{2}.*?:.*?]/.test(out))
-		return;
-	stdoutw.call(process.stdout, out);
-};
-
-var toRun = process.argv.slice(2).slice(-1)[0] || 'default'; // Works only if task name is the last param
-console.writeLine('Starting Gulp task "'+toRun+'"');
-var require_list = ['gulp'];
-if (['js','scss','default'].indexOf(toRun) !== -1){
-	require_list.push.apply(require_list, [
-		'gulp-plumber',
-		'gulp-duration',
-		'gulp-sourcemaps',
-	]);
-
-	if (toRun === 'scss' || toRun === 'default')
-		require_list.push.apply(require_list, [
-			'gulp-sass',
-			'gulp-autoprefixer',
-			'gulp-clean-css',
-		]);
-	if (toRun === 'js' || toRun === 'default')
-		require_list.push.apply(require_list, [
-			'gulp-uglify',
-			'gulp-babel',
-			'gulp-cached'
-		]);
-}
-console.write('(');
-for (var i= 0,l=require_list.length; i<l; i++){
-	var v = require_list[i],
-		key = v.replace(/^gulp-([a-z-]+)$/, '$1').replace(/-(\w)/,function(_, a){
-			return a.toUpperCase();
-		});
-	global[key] = require(v);
-	console.write(' '+v);
-}
-console.writeLine(" )\n");
-
-var workingDir = __dirname;
-
-function Logger(prompt){
-	var $p = '['+chalk.blue(prompt)+'] ';
-	this.log = function(message){
-		console.writeLine($p+message);
-	};
-	this.error = function(message){
+	log(message){
+		console.log(this.prefix+message);
+	}
+	error(message){
 		if (typeof message === 'string'){
 			message = message.trim()
 				.replace(/[\/\\]?www/,'');
-			console.error($p+'Error in '+message);
+			console.error(this.prefix+'Error in '+message);
 		}
 		else console.log(JSON.stringify(message,null,'4'));
-	};
-	return this;
+	}
 }
 
-var SASSL = new Logger('scss');
+let SASSL = new Logger('scss'),
+	SASSWatchArray = 'sass/*.scss';
 gulp.task('scss', function() {
-	gulp.src('sass/*.scss')
+	return gulp.src(SASSWatchArray)
 		.pipe(plumber(function(err){
 			SASSL.error(err.relativePath+'\n'+' line '+err.line+': '+err.messageOriginal);
 			this.emit('end');
@@ -85,7 +42,9 @@ gulp.task('scss', function() {
 				outputStyle: 'expanded',
 				errLogToConsole: true,
 			}))
-			.pipe(autoprefixer('last 2 version'))
+			.pipe(autoprefixer({
+	            browsers: ['last 2 versions','not ie <= 11'],
+	        }))
 			.pipe(cleanCss({
 				processImport: false,
 				compatibility: '-units.pc,-units.pt'
@@ -93,17 +52,14 @@ gulp.task('scss', function() {
 		.pipe(sourcemaps.write('.', {
 			includeContent: true,
 		}))
-		.pipe(duration('scss'))
 		.pipe(gulp.dest('derpinewtab/css'));
 });
 
-var JSL = new Logger('js'),
-	JSWatchArray = ['js/*.js'];
-gulp.task('js', function(){
-	var taskName = 'js';
-	gulp.src(JSWatchArray)
-		.pipe(duration(taskName))
-		.pipe(cached(taskName, { optimizeMemory: true }))
+let JSL = new Logger('js'),
+	JSWatchArray = 'js/*.js';
+gulp.task('js', () => {
+	return gulp.src(JSWatchArray)
+		.pipe(cached('js', { optimizeMemory: true }))
 		.pipe(plumber(function(err){
 			err =
 				err.fileName
@@ -120,11 +76,12 @@ gulp.task('js', function(){
 		}))
 		.pipe(sourcemaps.init())
 			.pipe(babel({
-				presets: ['es2015']
+				presets: ['env']
 			}))
 			.pipe(uglify({
-				preserveComments: function(_, comment){ return /^!/m.test(comment.value) },
-				output: { ascii_only: false },
+				output: {
+					comments: function(_, comment){ return /^!/m.test(comment.value) },
+				},
 			}))
 		.pipe(sourcemaps.write('.', {
 			includeContent: true,
@@ -132,9 +89,12 @@ gulp.task('js', function(){
 		.pipe(gulp.dest('derpinewtab/js'));
 });
 
-gulp.task('default', ['scss', 'js'], function(){
-	gulp.watch(JSWatchArray, {debounceDelay: 2000}, ['js']);
+gulp.task('watch', done => {
+	gulp.watch(JSWatchArray, {debounceDelay: 2000}, gulp.series('js'));
 	JSL.log('File watcher active');
-	gulp.watch('sass/*.scss', {debounceDelay: 2000}, ['scss']);
+	gulp.watch(SASSWatchArray, {debounceDelay: 2000}, gulp.series('scss'));
 	SASSL.log('File watcher active');
+	done();
 });
+
+gulp.task('default', gulp.series(gulp.parallel('js', 'scss'), 'watch'));
