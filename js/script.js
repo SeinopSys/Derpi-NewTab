@@ -344,11 +344,11 @@ $(function(){
 				if (typeof image === 'undefined')
 					return reQuest(typeof page === 'number' ? page+1 : 2);
 				
-				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.orig_sha512_hash){
+				if (!LStorage.has("image_hash") || LStorage.get("image_hash") !== image.sha512_hash){
 					if (typeof page === 'undefined')
 						$data.html('<h1>Searching for new image...</h1>').css('opacity','1');
 					
-					imgElement.src = 'https:'+image.pretty_url;
+					imgElement.src = 'http:'+image.image;
 					$(imgElement).on('load',function(){
 						// Save image into localStorage
 						LStorage.set("image_data", imgElement.src);
@@ -392,7 +392,9 @@ $(function(){
 			    delayBetweenCycles: 0,
 			});
 			
-			let votestr = '', cc = image.comment_count;
+			let votestr = '',
+				cc = image.comment_count,
+				fc = image.faves;
 			if (image.upvotes + image.downvotes === 0) votestr = 'no votes';
 			else {
 				if (image.upvotes > 0){
@@ -411,6 +413,7 @@ $(function(){
 					<span class="uploadtime visible">uploaded <time datetime="${image.created_at}"></time> by ${image.uploader}</span>
 					<span class="votes">${votestr}</span>
 					<span class="comments">${cc>0?cc:'no'} comment${cc!==1?'s':''}</span>
+					<span class="faves">${fc>0?fc:'no'} favorite${fc!==1?'s':''}</span>
 				</p>`
 			);
 			updateMetadataSettings();
