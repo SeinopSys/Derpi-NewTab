@@ -224,7 +224,7 @@
 		const size = 'width.gte:1280+height.gte:720+width.lte:4096+height.lte:4096';
 
 		$.ajax({
-			url: 'https://derpibooru.org/search.json?perpage=5'+
+			url: 'https://derpibooru.org/search.json?perpage=5&min_score=5'+
 			        '&q=wallpaper+%26%26+('+settings.allowedTags.join('+%7C%7C+')+')+%26%26+-equestria+girls+'+size+
 			        (typeof page === 'number' ? '&page='+page : ''),
 			success: function(data){
