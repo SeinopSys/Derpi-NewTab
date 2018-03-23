@@ -1,0 +1,413 @@
+:root {
+	--sidebar-size: 300px;
+	--upvote-color: #5b9b26;
+	--downvote-color: #da3412;
+	--comment-color: #b099dd;
+	--fav-color: #a18e27;
+}
+:focus {
+	outline: 0;
+}
+body, html, #image, #image-ghost, #settingsWrap {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+}
+html {
+    background-color: #1d242f;
+    color: #e0e0e0;
+}
+body {
+	font-family: sans-serif;
+	overflow: hidden;
+	background: transparent;
+	font-size: 16px;
+}
+body.loading {
+	background-image: url(loading.svg);
+}
+body.sidebar-open #settings-wrap {
+	left: 0;
+}
+body.sidebar-open #viewport {
+	left: var(--sidebar-size);
+}
+a, a:active, a:visited {
+	color: #478acc;
+	text-decoration: none;
+	cursor: pointer;
+}
+a:hover {
+	color: #b099dd;
+}
+#settings-wrap, #viewport {
+	position: absolute;
+	top: 0;
+	height: 100vh;
+	transition: left .2s ease-in-out;
+	will-change: left;
+}
+#settings-wrap {
+	display: block;
+	left: calc(-1 * var(--sidebar-size));
+	width: var(--sidebar-size);
+	background: transparent;
+	overflow: auto;
+}
+#viewport {
+	left: 0;
+	width: 100vw;
+	display: flex;
+	flex-flow: column nowrap;
+}
+/*noinspection CssOptimizeSimilarProperties*/
+body, #image {
+	background-position: center;
+	background-repeat: no-repeat;
+}
+#image, #image-ghost {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	background-position: center center;
+}
+#image {
+	z-index: 2;
+	background-size: contain;
+	opacity: 1;
+	transition: opacity .5s ease-out;
+}
+#image-ghost {
+	z-index: 1;
+	display: block;
+	opacity: .3;
+	background-size: cover;
+}
+#metadata-area {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 3;
+	display: flex;
+	flex-flow: row nowrap;
+	background: rgba(0, 0, 0, .8);
+	user-select: none;
+}
+#show-settings-button {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 10px;
+	margin: 10px;
+	cursor: pointer;
+}
+#show-settings-button.disabled {
+	opacity: .5;
+}
+#show-settings-button svg {
+	width: 32px;
+	height: 32px;
+	fill: currentColor;
+}
+#data {
+	flex: 1 1 auto;
+	display: flex;
+	flex-flow: column nowrap;
+	padding: 15px;
+	box-sizing: border-box;
+	width: 100%;
+	color: #fff;
+	text-align: left;
+	overflow: hidden;
+}
+#artist-list {
+	margin: 0;
+	font-size: 24px;
+	line-height: 20px;
+	display: inline-block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+	height: 1.1em;
+	font-weight: normal;
+}
+#artist-list a {
+	text-transform: uppercase;
+}
+#metadata-list {
+	margin: 0;
+	font-size: 14px;
+	display: inline-flex;
+	flex-flow: row nowrap;
+	align-items: center;
+}
+#metadata-list:not(:last-child) {
+	margin-bottom: 5px;
+}
+#metadata-list > * {
+	display: flex;
+	flex-flow: row nowrap;
+	align-items: center;
+	padding: 3px 5px;
+}
+#metadata-list > :not(:last-child) {
+	margin-right: 3px;
+}
+#metadata-list > a {
+	font-weight: bold;
+}
+body:not(.loading) #metadata-list > a {
+	transition: background .1s ease-in-out, color .1s ease-in-out;
+}
+#metadata-list .upvotes {
+	color: var(--upvote-color);
+}
+#metadata-list a.upvotes:hover,
+#metadata-list a.upvotes.active {
+	background: #5b9b26;
+	color: #e0e0e0;
+}
+#metadata-list .downvotes {
+	color: var(--downvote-color);
+}
+#metadata-list a.downvotes:hover,
+#metadata-list a.downvotes.active {
+	background: #da3412;
+	color: #e0e0e0;
+}
+#metadata-list .comments {
+	color: var(--comment-color);
+}
+#metadata-list a.comments:hover {
+	background: #b099dd;
+	color: #1d242f;
+}
+#metadata-list .faves {
+	color: var(--fav-color);
+}
+#metadata-list a.faves:hover,
+#metadata-list a.faves.active {
+	background: #a18e27;
+	color: #e0e0e0;
+}
+#metadata-list svg {
+	height: 1em;
+	fill: currentColor;
+}
+#metadata-list svg + span {
+	margin-left: 5px;
+}
+#settings {
+	font-size: 16px;
+	padding: 10px;
+	height: 100%;
+}
+#settings header {
+	font-size: 26px;
+	text-align: center;
+	margin: 0 0 10px;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+#settings > section:not(:last-of-type) {
+	margin-bottom: 10px;
+}
+#settings p {
+	margin: 0 0 10px;
+}
+#settings p:last-child {
+	margin-bottom: 0;
+}
+#settings h2 {
+	font-size: 24px;
+	margin: 0 0 5px;
+}
+#settings .input.rating-tags label {
+	display: inline-block;
+	margin: 2px;
+}
+#settings .input.rating-tags label input {
+	display: none;
+}
+#settings .input.rating-tags label input ~ span {
+	display: inline-block;
+	cursor: pointer;
+	padding: 4px;
+	font-size: 14px;
+	background: #113456;
+	color: #489df1;
+	border: 2px solid #275a8d;
+}
+#settings .input.rating-tags label input:not(:checked) ~ span {
+	background: #333;
+	color: #8c8c8c;
+	border-color: #595959;
+	opacity: .75;
+	text-decoration: line-through;
+}
+#settings .input.rating-tags + .warning-block {
+	margin-top: 8px;
+}
+#settings .switch {
+	display: flex;
+	flex-flow: row nowrap;
+	justify-content: flex-start;
+	align-items: center;
+	user-select: none;
+}
+#settings .switch:not(:last-child) {
+	margin-bottom: 8px;
+}
+#settings .switch > input {
+	display: none;
+}
+#settings .switch > input + .lever {
+	display: inline-block;
+	position: relative;
+	--border-width: 2px;
+	border: var(--border-width) solid;
+	--padding: 2px;
+	padding: var(--padding);
+	margin-right: .5em;
+	--height: 1em;
+	height: var(--height);
+	--width: calc(var(--height) * 1.8);
+	width: var(--width);
+	border-radius: calc(var(--height) / 2);
+	box-sizing: border-box;
+	--transition-dur: .2s;
+	transition: background-color var(--transition-dur) ease-in-out;
+}
+#settings .switch > input + .lever:before {
+	--size: calc(var(--height) - (var(--border-width) * 2) - (var(--padding) * 2));
+	content: "";
+	display: block;
+	position: absolute;
+	top: var(--padding);
+	left: var(--padding);
+	height: var(--size);
+	width: var(--size);
+	border-radius: 50%;
+	transition: background-color var(--transition-dur) ease-in-out, left var(--transition-dur) ease-in-out;
+}
+#settings .switch > input:not(:checked) + .lever {
+	background-color: #500;
+}
+#settings .switch > input:not(:checked) + .lever:before {
+	background-color: #fdd;
+}
+#settings .switch > input:checked + .lever {
+	background-color: #050;
+}
+#settings .switch > input:checked + .lever:before {
+	background-color: #dfd;
+	left: calc(var(--width) - var(--size) - var(--border-width) - (var(--padding) * 2));
+}
+#settings footer {
+	font-size: 14px;
+	text-align: center;
+	padding: 20px 0;
+}
+#settings footer #version:empty {
+	display: none;
+}
+#domain-settings select {
+}
+#tag-settings p:nth-last-child(2) {
+	margin-bottom: 0 !important;
+}
+.block {
+	padding-left: 5px;
+	border-left: 2px solid;
+	display: none;
+}
+.block.warning-block { color: #ffa }
+.block.error-block { color: #faa }
+.block.success-block { color: #afa }
+.block .clear {
+	cursor: pointer;
+	font-weight: bold;
+	display: inline-block;
+	text-decoration: underline;
+}
+.block .clear:before {
+	content: "Dismiss";
+}
+#action-settings input, #domain-settings select {
+	display: block;
+	box-sizing: border-box;
+	padding: 6px;
+	border: 1px solid #41464e;
+	font-size: 14px;
+	color: currentColor;
+	background: #191f2a;
+	width: 100%;
+	transition: background .1s ease-in-out, border .1s ease-in-out;
+}
+#action-settings input:focus {
+	outline: 0;
+	border: 1px solid #647493;
+	background: #232b3a;
+}
+/* Scrollbar */
+::-webkit-scrollbar {
+	width: 6px;
+}
+::-webkit-scrollbar-button {
+	display: none;
+}
+::-webkit-scrollbar-thumb {
+	background-color: rgba(255, 255, 255, 0.9);
+	border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:active {
+	background-color: #fff;
+}
+/* First run dialog */
+#dialog {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 4;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	color: #fff;
+	background-color: rgba(0, 0, 0, 0.8);
+	cursor: default;
+	user-select: none;
+	transition-property: transform, opacity;
+	transition-duration: .5s;
+	transition-timing-function: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+#dialog.gtfo {
+	transform: scale(3);
+	opacity: 0;
+}
+#dialog-inner {
+	font-family: sans-serif;
+	font-size: 1.5em;
+}
+#dialog-inner button {
+	border: 0;
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	border-radius: 5px;
+	font-size: 30px;
+	font-family: sans-serif;
+	padding: 10px;
+	cursor: pointer;
+	transition: background-color .2s linear;
+}
+#dialog-inner button:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+#dialog-inner button:active {
+	background: rgba(255, 255, 255, 0.4);
+}

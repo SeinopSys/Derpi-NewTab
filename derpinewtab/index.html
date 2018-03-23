@@ -1,92 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Derpi-New Tab</title>
-<!-- Matches integrity of https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css found on https://cdnjs.com/libraries/materialize -->
-<link rel="stylesheet" href="css/materialize.min.css" integrity="sha256-e22BQKCF7bb/h/4MFJ1a4lTRR2OuAe8Hxa/3tgU5Taw=">
-<link rel="stylesheet" href="css/material-icons.css">
-<link rel="stylesheet" href="css/style.css">
-<style id="style"></style>
+	<meta charset="utf-8">
+	<title>Derpi-New Tab</title>
+	<link rel="stylesheet" href="style.css">
+	<style id="style"></style>
 </head>
 <body class="loading">
 
-<div id="settingsWrap">
+<aside id="settings-wrap">
 	<div id="settings">
 		<header>Settings</header>
-        <ul class="collapsible" data-collapsible="accordion">
-		    <li id="tag-settings">
-				<div class="collapsible-header">Filtering</div>
-				<div class="collapsible-body">
-					<h2>Rating tags</h2>
-					<p>Set the rating tags you want to allow when requesting images. Click to toggle.</p>
-					<div class="input systags"></div>
-					<div class="re-request" style="display: none">The image will be updated in <span></span> to reflect the changes.</div>
-					<br>
-					<h2>Filters</h2>
-					<p>Filtering is controlled by whatever filter you have selected on <a href="https://derpibooru.org/">derpibooru.org</a>, or the Default filter if you aren't logged in. You have to enable/disable specific system tags above individually regardless of your filter setting.</p>
-				</div>
-		    </li>
-		    <li id="metadata-settings">
-				<div class="collapsible-header">Metadata</div>
-				<div class="collapsible-body">
-					<p>Choose what information you want to see in the bottom right corner.</p>
-					<div class="switch">
-						<label>
-							<input type="checkbox" name="showvotes">
-							<span class="lever"></span> Show votes
-						</label>
-					</div>
-					<div class="switch">
-						<label>
-							<input type="checkbox" name="showcomments">
-							<span class="lever"></span> Show comment count
-						</label>
-					</div>
-					<div class="switch">
-						<label>
-							<input type="checkbox" name="showfaves">
-							<span class="lever"></span> Show favorite count
-						</label>
-					</div>
-				</div>
-		    </li>
-		    <li id="crop-settings">
-				<div class="collapsible-header">Image cropping</div>
-				<div class="collapsible-body">
-					<p>This setting allows you to modify how the image is displayed if its size differs from the browser's size (which happens most of the time).</p>
-		            <div class="input-field col s12">
-						<select>
-							<option value="cover" data-icon="/img/ui-cover-window.svg">Cover the window</option>
-							<option value="contain" data-icon="/img/ui-fit-window.svg">Fit inside window</option>
-							<option value="100% 100%" data-icon="/img/ui-stretch-window.svg">Stretch to fit</option>
-						</select>
-					</div>
-				</div>
-		    </li>
-        </ul>
-		<footer>Derpi-New Tab<span id="disp-version"></span><br>by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp; <a href="https://github.com/ponydevs/Derpi-NewTab/graphs/contributors">contributors</a><br><a href="https://github.com/ponydevs/Derpi-NewTab">View source code</a></footer>
+		<section id="domain-settings">
+			<h2>Preferred domain</h2>
+			<p>Derpibooru can be accessed from multiple domains. Because this extension communicates with the site, you might want to change the domain to the one you typically use.</p>
+			<select></select>
+		</section>
+		<section id="tag-settings">
+			<h2>Rating tags</h2>
+			<p>Set the rating tags you want to allow when requesting images. Click to toggle.</p>
+			<div class="input rating-tags"></div>
+			<p class="block warning-block re-request">The image will be updated in <span></span> to reflect the changes.</p>
+		</section>
+		<section>
+			<h2>Filters</h2>
+			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a>. You have to enable/disable specific system tags above individually regardless of your filter setting.</p>
+		</section>
+		<section id="metadata-settings">
+			<h2>Metadata</h2>
+			<p>Choose what information you want to see below the image.</p>
+			<label class="switch">
+				<input type="checkbox" name="showuploader">
+				<span class="lever"></span>
+				<span>Show uploader</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showscore">
+				<span class="lever"></span>
+				<span>Show aggregate score</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showvotes">
+				<span class="lever"></span>
+				<span>Show votes</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showcomments">
+				<span class="lever"></span>
+				<span>Show comment count</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showfaves">
+				<span class="lever"></span>
+				<span>Show favorite count</span>
+			</label>
+		</section>
+		<footer>
+			Derpi-New Tab<span id="version"></span><br>
+			by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp; <a
+				href="https://github.com/ponydevs/Derpi-NewTab/graphs/contributors">contributors</a><br>
+			<a href="https://github.com/ponydevs/Derpi-NewTab">View source code</a><br>
+			Icons: <a href="https://fontawesome.com/license">Font Awesome Free</a> v5.0.8
+		</footer>
 	</div>
-</div>
-<!-- Main image element -->
-<div id="image"></div>
-<!-- Ghost image element (e.g. for "fit inside window" cropping option) -->
-<div id="image-ghost"></div>
-<!-- Contains elements that will fade out on a timer -->
-<div id="fade-layer">
-	<div id="data" class="z-depth-2"></div>
-	<a id="show-settings-button" class="btn-floating btn-large waves-effect waves-light"><i class="material-icons">menu</i></a>
-</div>
+</aside>
 
-<!-- Matches integrity of https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js found on https://cdnjs.com/libraries/jquery/ -->
+<main id="viewport">
+	<div id="image"></div>
+	<div id="image-ghost"></div>
+	<div id="metadata-area">
+		<div id="show-settings-button">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+				<path d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"></path>
+			</svg>
+		</div>
+		<div id="data"></div>
+	</div>
+</main>
+
 <script src="js/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="></script>
-<!-- Matches integrity of https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.min.js found on https://cdnjs.com/libraries/moment.js/ -->
-<script src="js/moment.min.js" integrity="sha256-9YAuB2VnFZNJ+lKfpaQ3dKQT9/C0j3VUla76hHbiVF8="></script>
-<!-- Matches integrity of https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js found on https://cdnjs.com/libraries/materialize/ -->
-<script src="js/materialize.min.js" integrity="sha256-uWtSXRErwH9kdJTIr1swfHFJn/d/WQ6s72gELOHXQGM="></script>
-<!-- Matches integrity of https://cdnjs.cloudflare.com/ajax/libs/jquery-throttle-debounce/1.1/jquery.ba-throttle-debounce.min.js found on https://cdnjs.com/libraries/jquery-throttle-debounce/ -->
-<script src="js/jquery.ba-throttle-debounce.min.js" integrity="sha256-+nuEu243+6BveXk5N+Vbr268G+4FHjUOEcfKaBqfPbc="></script>
-<script src="js/jquery.simplemarquee/jquery.simplemarquee.js"></script>
+<script src="js/fa.js"></script>
 <script src="js/script.js"></script>
 
 </body>
