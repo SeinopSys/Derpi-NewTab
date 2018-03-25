@@ -418,10 +418,10 @@
 		$body.addClass('loading');
 		$tagSettings.find('.re-request:visible').slideUp();
 
-		const size = 'width.gte:1280+height.gte:720+width.lte:4096+height.lte:4096';
+		const size = ['','width.gte:1280','height.gte:720','width.lte:4096','height.lte:4096'].join('+%26%26+');
 
 		fetch(
-			`https://${settings.domain}/search.json?perpage=5&q=wallpaper+%26%26+(${settings.allowedTags.join('+%7C%7C+')})+%26%26+-equestria+girls+${size}`,
+			`https://${settings.domain}/search.json?perpage=5&q=wallpaper+%26%26+(${settings.allowedTags.join('+%7C%7C+')})+%26%26+-equestria+girls${size}`,
 			{ credentials: 'include' }
 		).then(request => {
 			request.json().then(data => {
