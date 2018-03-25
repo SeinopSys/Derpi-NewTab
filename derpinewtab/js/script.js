@@ -226,15 +226,42 @@
 
 			fetch(`https://${settings.domain}/${imageData.id}`, { credentials: "include" })
 				.then(resp => resp.text())
+				.catch(err => {
+					console.error('Interaction data could not be updated:', err);
+				})
 				.then(resp => {
+					if (typeof resp !== 'string')
+						return;
+
 					const parser = new DOMParser();
 					const $el = $(parser.parseFromString(resp, "text/html"));
-
-					imageData.upvotes = parseInt($el.find('.interaction--upvote .upvotes').text(), 10);
-					imageData.downvotes = parseInt($el.find('.interaction--downvote .downvotes').text(), 10);
-					imageData.faves = parseInt($el.find('.interaction--fave .favourites').text(), 10);
+					const $metabar = $el.find('.image-metabar');
+					if (!$metabar.length){
+						console.error('Interaction data could not be updated, no metabar found in response:', resp);
+						return;
+					}
+					$.each({
+						'.score': 'score',
+						'.interaction--upvote .upvotes': 'upvotes',
+						'.interaction--downvote .downvotes': 'downvotes',
+						'.interaction--fave .favourites': 'faves',
+						'.interaction--comments .comments_count': 'comment_count',
+					}, (sel, key) => {
+						const val = $el.find(sel).text();
+					if (typeof val === 'string')
+						imageData[key] = parseInt(val, 10);
+					});
 					saveImageData();
-					const interactions = JSON.parse($el.find('.js-datastore').attr('data-interactions'));
+
+					const interactionData = $el.find('.js-datastore').attr('data-interactions');
+					let interactions;
+					try {
+						interactions = JSON.parse(interactionData);
+					}
+					catch(e){
+						console.error('Interaction data could not be updated, invalid response from server:', interactionData);
+						return;
+					}
 					const voteObj = {
 						up: false,
 						down: false,
@@ -419,7 +446,12 @@
 		$tagSettings.find('.re-request:visible').slideUp();
 
 		const size = ['','width.gte:1280','height.gte:720','width.lte:4096','height.lte:4096'].join('+%26%26+');
-
+		const err = () => {
+			$body.removeClass('loading');
+			if (!imageData.id)
+				$data.html('<h1>There was an error while fetching the image data</h1><p>'+(navigator.onLine ? 'Derpibooru may be down for maintenance, try again later.' : 'You are not connected to the Internet.')+'</p>');
+			else console.error('There was an error while searching for new images, keeping last cached state silently');
+		};
 		fetch(
 			`https://${settings.domain}/search.json?perpage=5&q=wallpaper+%26%26+(${settings.allowedTags.join('+%7C%7C+')})+%26%26+-equestria+girls${size}`,
 			{ credentials: 'include' }
@@ -455,11 +487,8 @@
 					image.image = 'https:'+image.image;
 
 				imageFound(image);
-			});
-		}).catch(() => {
-			$body.removeClass('loading');
-			$data.html('<h1>There was an error while fetching the image data</h1><p>'+(navigator.onLine ? 'Derpibooru may be down for maintenance, try again later.' : 'You are not connected to the Internet.')+'</p>');
-		});
+			}).catch(err);
+		}).catch(err);
 	}
 
 	function imageFound(image){

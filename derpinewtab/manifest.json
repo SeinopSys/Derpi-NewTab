@@ -3,7 +3,7 @@
 	
 	"name": "Derpi-New Tab",
 	"description": "A new tab page featuring the latest pony wallpaper from Derpibooru.org",
-	"version": "2.1.3",
+	"version": "2.1.4",
 	
 	"applications": {
 		"gecko": {
