@@ -2,12 +2,7 @@
 (function($){
 	'use strict';
 
-	fetch('manifest.json')
-		.then(function(response) {
-			response.json().then(data => {
-				$('#version').text(' v' + data.version);
-			});
-		});
+	$('#version').text(' v' + chrome.runtime.getManifest().version);
 
 	//Setting check
 	let settings = {
