@@ -5,7 +5,9 @@
 	"devel": true,
 	"esnext": true,
 	"globals": {
-		"chrome": true
+		"chrome": true,
+		"browser": true,
+		"fa": true
 	},
 	"immed": true,
 	"jquery": true,

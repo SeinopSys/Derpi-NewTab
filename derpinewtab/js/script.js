@@ -1,4 +1,3 @@
-/* global fa */
 (function($){
 	'use strict';
 
@@ -16,6 +15,7 @@
 		$body = $('body'),
 		$metaSettings = $('#metadata-settings'),
 		$domainSettings = $('#domain-settings'),
+		$ffDomainApply = $('#firefox-domain-apply'),
 		$image = $('#image'),
 		$imageGhost = $('#image-ghost'),
 		$data = $('#data'),
@@ -102,16 +102,48 @@
 			tagSelectCountdownStarter();
 		});
 	})();
+	const csrfToken = (function(){
+		const isSignedIn = html => /<\/head><body data-signed-in="true"/.test(html);
+		let tokenCache = {};
+		const useCacheForMethods = {
+			PUT: true,
+			GET: false,
+		};
+		const get = function(requestMethod){
+			if (tokenCache.token && useCacheForMethods[requestMethod] === true)
+				return new Promise(res => { res(tokenCache) });
+			return new Promise((res, rej) => {
+				fetch(`https://${settings.domain}/pages/about`, { credentials: 'include' })
+					.then(resp => resp.text())
+					.catch(rej)
+					.then(resp => {
+						let token = resp.match(/<meta name="csrf-token" content="([^"]+)" \/>/);
+						if (token[1]){
+							tokenCache = { token: token[1], signed_in: isSignedIn(resp) };
+							res(tokenCache);
+						}
+						rej(resp);
+					})
+					.catch(rej);
+			});
+		};
+		const clear = () => {
+			tokenCache = {};
+		};
+		return { get, clear };
+	})();
 	// Domain settings
+	const firefox = 'browser' in window;
+	const defaultDomain = 'derpibooru.org';
 	(function DomainSettings(){
-		const availDomains = ['derpibooru.org','trixiebooru.org'];
+		const availDomains = [defaultDomain,'www.derpibooru.org','trixiebooru.org'];
 		let $select = $domainSettings.find('select');
 
 		let domain = localStorage.getItem('setting_domain');
 		if (domain && availDomains.indexOf(domain) !== -1)
 			settings.domain = domain;
 		else {
-			settings.domain = availDomains[0];
+			settings.domain = defaultDomain;
 			localStorage.setItem('setting_domain', settings.domain);
 		}
 
@@ -119,18 +151,79 @@
 			$select.append(`<option ${el===domain?'selected':''}>${el}</option>`);
 		});
 
-		$select.on('change',function(e){
-			e.stopPropagation();
-
+		const switchDomain = newDomain => {
+			if (settings.domain === newDomain)
+				return;
+			settings.domain = newDomain;
+			localStorage.setItem('setting_domain', settings.domain);
+			if (firefox)
+				$select.triggerHandler('change');
+			window.updateVoteStatus();
+			csrfToken.clear();
+			updateDomain();
+		};
+		const domainChangeHandler = () => {
 			const newDomain = $select.val();
 			if (availDomains.indexOf(newDomain) === -1)
 				return;
 
-			settings.domain = newDomain;
-			localStorage.setItem('setting_domain', settings.domain);
-			updateDomain();
-		});
+			const oldValue = settings.domain;
+			requestDomainPermission(newDomain)
+				.then(() => {
+					switchDomain(newDomain);
+				})
+				.catch(() => {
+					$select.val(oldValue).triggerHandler('change');
+				});
+		};
+		if (firefox){
+			$ffDomainApply.on('click', domainChangeHandler);
+			$select.on('change', function(){
+				$ffDomainApply.attr('disabled', $select.val() === settings.domain);
+			});
+		}
+		else {
+			$ffDomainApply.remove();
+			$select.on('change', domainChangeHandler);
+		}
 	})();
+	function permissionAction(perm, action){
+		if (firefox)
+			return browser.permissions[action](perm)
+				.then(result => {
+					return new Promise((res, rej) => {
+						permissionCallback(result, res, rej);
+					});
+				});
+
+		return new Promise((res, rej) => {
+			chrome.permissions[action](perm, result => {
+				permissionCallback(result, res, rej);
+			});
+		});
+	}
+	function permissionCallback(result, res, rej){
+		if (result)
+			res();
+		else rej();
+	}
+	function requestPermissions(permissions){
+		return permissionAction({ permissions }, 'request');
+	}
+	function domainPermissionAction(domain, action){
+		const perm = { origins: [ `https://${domain}/` ] };
+
+		return permissionAction(perm, action);
+	}
+	// noinspection JSUnusedLocalSymbols
+	function checkDomainPermissions(domain){
+		return domainPermissionAction(domain, 'contains');
+	}
+	function requestDomainPermission(domain){
+		if (domain === defaultDomain)
+			return new Promise(res => res());
+		return domainPermissionAction(domain, 'request');
+	}
 	// Metadata settings
 	(function MetadataSettings(){
 		let $inputs = $metaSettings.find('.switch input'), keys;
@@ -278,78 +371,111 @@
 		window.updateVoteStatus = function(){ updateVoteStatus() };
 	})();
 
-	function isSignedIn(html){
-		return /<\/head><body data-signed-in="true"/.test(html);
-	}
-	const getCSRFToken = (function(){
-		let tokenCache = {};
-		const useCacheForMethods = {
-			PUT: true,
-			GET: false,
-		};
-		return function(requestMethod){
-			if (tokenCache.token && useCacheForMethods[requestMethod] === true)
-				return new Promise(res => { res(tokenCache) });
-			return new Promise((res, rej) => {
-				fetch(`https://${settings.domain}/pages/about`, { credentials: 'include' })
-					.then(resp => resp.text())
-					.catch(rej)
-					.then(resp => {
-						let token = resp.match(/<meta name="csrf-token" content="([^"]+)" \/>/);
-						if (token[1]){
-							tokenCache = { token: token[1], signed_in: isSignedIn(resp) };
-							res(tokenCache);
-						}
-						rej(resp);
-					})
-					.catch(rej);
+	const fpCookieName = '_booru_fpr';
+	const cookieUrl = `https://${settings.domain}/`;
+	const fallbackFp = 'bburu8b1123ef6d07ddc56277ae80e88d';
+	const getFpCookie = () => {
+		let res;
+
+		requestPermissions(['cookies']).then(() => {
+			const getObject = {
+				name: fpCookieName,
+				url: cookieUrl,
+			};
+			const handleCookie = existingCookie => {
+				res(existingCookie);
+			};
+			if (firefox)
+				browser.cookies.get(getObject).then(handleCookie);
+			else chrome.cookies.get(getObject, handleCookie);
+		});
+
+		return new Promise(resolve => {
+			res = resolve;
+		});
+	};
+	const clearFallbackFpCookie = () => {
+		return new Promise(res => {
+			getFpCookie().then(cookie => {
+				if (cookie.value === fallbackFp){
+					const removeObject = {
+						name: fpCookieName,
+						url: cookieUrl,
+					};
+					if (firefox)
+						browser.cookies.remove(removeObject).then(res);
+					else chrome.cookies.remove(removeObject, res);
+				}
+				else res();
 			});
-		};
-	})();
-	function interact(endpoint, value){
-		return new Promise((res, rej) => {
+		});
+	};
+	function interact(endpoint, value) {
+		let res, rej;
+
+		const work = () => {
 			const type = 'PUT';
-			getCSRFToken(type).then(data => {
+			csrfToken.get(type).then(data => {
 				if (!data.signed_in){
 					alert('You must be signed in to vote. If you are signed in, try changing your domain in the settings.');
 					return;
 				}
 
-		        $.ajax({
-		            type,
-		            url: `https://${settings.domain}/api/v2/interactions/${endpoint}`,
-		            beforeSend: request => {
-		                request.setRequestHeader('x-csrf-token', data.token);
-		            },
+				$.ajax({
+					type,
+					url: `https://${settings.domain}/api/v2/interactions/${endpoint}`,
+					beforeSend: request => {
+						request.setRequestHeader('x-csrf-token', data.token);
+					},
 					contentType: 'application/json',
-		            data: JSON.stringify({
+					data: JSON.stringify({
 						"class": "Image",
 						"id": imageData.id,
 						"value": value,
-						"_method": "PUT",
 					}),
-		            processData: false,
-		            success: data => {
+					processData: false,
+					success: data => {
 						imageData.faves = data.favourites;
 						imageData.upvotes = data.upvotes;
 						imageData.downvotes = data.downvotes;
 						setImageData(imageData);
 						metadata();
-						res();
-		            },
-		            error: resp => {
-		                // Already voted
-		                if (resp.status === 409){
-		                    vote('false').then(res).catch(rej);
-		                    return;
-		                }
+						clearFallbackFpCookie().then(res);
+					},
+					error: resp => {
+						// Already voted
+						if (resp.status === 409){
+							vote('false').then(res).catch(rej);
+							return;
+						}
 
 						alert('Failed to vote');
 						console.log(resp);
-						rej(resp);
-		            },
-		        });
+						clearFallbackFpCookie().then(() => rej(resp));
+					},
+				});
 			}).catch(rej);
+		};
+
+		getFpCookie().then(existingCookie => {
+			const setObject = {
+				domain: settings.domain,
+				name: fpCookieName,
+				path: '/',
+				value: fallbackFp,
+				url: cookieUrl,
+			};
+			if (existingCookie === null){
+				if (firefox)
+					browser.cookies.set(setObject).then(work);
+				else chrome.cookies.set(setObject, work);
+			}
+			else work();
+		});
+
+		return new Promise((resolve, reject) => {
+			res = resolve;
+			rej = reject;
 		});
 	}
 	function fave(way){

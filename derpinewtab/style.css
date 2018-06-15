@@ -315,8 +315,6 @@ body:not(.loading) #metadata-list > a {
 #settings footer #version:empty {
 	display: none;
 }
-#domain-settings select {
-}
 #tag-settings p:nth-last-child(2) {
 	margin-bottom: 0 !important;
 }
@@ -337,7 +335,16 @@ body:not(.loading) #metadata-list > a {
 .block .clear:before {
 	content: "Dismiss";
 }
-#action-settings input, #domain-settings select {
+#domain-settings #firefox-domain-apply {
+	margin-top: 10px;
+	background: #232b3a;
+	cursor: pointer;
+}
+#domain-settings #firefox-domain-apply:disabled {
+	opacity: .6;
+	cursor: not-allowed;
+}
+#action-settings input, #domain-settings select, #domain-settings button {
 	display: block;
 	box-sizing: border-box;
 	padding: 6px;
