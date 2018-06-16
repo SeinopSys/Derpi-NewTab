@@ -207,6 +207,7 @@
 			res();
 		else rej();
 	}
+	// noinspection JSUnusedLocalSymbols
 	function requestPermissions(permissions){
 		return permissionAction({ permissions }, 'request');
 	}
@@ -377,18 +378,16 @@
 	const getFpCookie = () => {
 		let res;
 
-		requestPermissions(['cookies']).then(() => {
-			const getObject = {
-				name: fpCookieName,
-				url: cookieUrl,
-			};
-			const handleCookie = existingCookie => {
-				res(existingCookie);
-			};
-			if (firefox)
-				browser.cookies.get(getObject).then(handleCookie);
-			else chrome.cookies.get(getObject, handleCookie);
-		});
+		const getObject = {
+			name: fpCookieName,
+			url: cookieUrl,
+		};
+		const handleCookie = existingCookie => {
+			res(existingCookie);
+		};
+		if (firefox)
+			browser.cookies.get(getObject).then(handleCookie);
+		else chrome.cookies.get(getObject, handleCookie);
 
 		return new Promise(resolve => {
 			res = resolve;
