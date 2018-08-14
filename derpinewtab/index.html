@@ -3,65 +3,101 @@
 <head>
 	<meta charset="utf-8">
 	<title>Derpi-New Tab</title>
-	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="css/style.css">
 	<style id="style"></style>
 </head>
-<body class="loading">
+<body class="loading offline">
 
 <aside id="settings-wrap">
 	<div id="settings">
 		<header>Settings</header>
+		<div id="offline-notice" class="block theme-block">
+			<img src="img/no-pony-100.svg">
+			<strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
+		</div>
 		<section id="domain-settings">
 			<h2>Preferred domain</h2>
 			<p>Derpibooru can be accessed from multiple domains. Because this extension communicates with the site, you might want to change the domain to the one you typically use.</p>
-			<select></select>
-			<button id="firefox-domain-apply" disabled>Apply</button>
+			<select class="input input--block"></select>
+			<button id="firefox-domain-apply" class="button input--block" disabled>Apply</button>
 		</section>
-		<section id="tag-settings">
-			<h2>Rating tags</h2>
+		<section id="search-settings">
+			<h2>Search</h2>
+			<p>The settings in this section will wait until you make no changes for <strong>1 second</strong> before applying to both save bandwidth and avoid spamming Derpibooru with requests.</p>
+			<h3>Rating Tags</h3>
 			<p>Set the rating tags you want to allow when requesting images. Click to toggle.</p>
-			<div class="input rating-tags"></div>
-			<p class="block warning-block re-request">The image will be updated in <span></span> to reflect the changes.</p>
+			<div class="rating-tags"></div>
+			<div class="block error-block" id="no-rating-tags">You need to select at least one rating tag.</div>
+			<h3>Restrictions</h3>
+			<label class="switch">
+				<input type="checkbox" name="showeqg">
+				<span class="lever"></span>
+				<span>Show <abbr title="Equestria Girls">EQG</abbr>-related images</span>
+			</label>
+			<p>Your filter must not hide the "equestria girls" tag (or related tags like "human") for this option to have any effect.</p>
+			<label class="switch">
+				<input type="checkbox" name="hd">
+				<span class="lever"></span>
+				<span>Require 720p+ resolution</span>
+			</label>
+			<p>This on will keep low res images from appearing in the new tab page.</p>
+			<label class="switch">
+				<input type="checkbox" name="rescap">
+				<span class="lever"></span>
+				<span>Resolution cap</span>
+			</label>
+			<p>By default a resolution cap of <span id="rescap-width"></span>&times;<span id="rescap-height"></span> is enforced to avoid freezing your browser when it tries to load an absurdly large wallpaper. You may choose to turn this off, but be prepared for potential lag should someone upload an 8k+ image.</p>
+			<hr>
+			<p>You can use the button below to open the search query used by the extension on the Derpibooru website.</p>
+			<a id="search-link" class="button input--block" target="_blank">Open search page</a>
 		</section>
 		<section>
 			<h2>Filters</h2>
 			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a>. You have to enable/disable specific system tags above individually regardless of your filter setting.</p>
 		</section>
 		<section id="metadata-settings">
-			<h2>Metadata</h2>
-			<p>Choose what information you want to see below the image.</p>
+			<h2>Metabar</h2>
+			<p>Customize the metabar found at the bottom of the page.</p>
 			<label class="switch">
-				<input type="checkbox" name="showuploader">
+				<input type="checkbox" name="showUploader">
 				<span class="lever"></span>
 				<span>Show uploader</span>
 			</label>
 			<label class="switch">
-				<input type="checkbox" name="showscore">
+				<input type="checkbox" name="showFaves">
 				<span class="lever"></span>
-				<span>Show aggregate score</span>
+				<span>Show favorite count</span>
 			</label>
 			<label class="switch">
-				<input type="checkbox" name="showvotes">
+				<input type="checkbox" name="showVotes">
 				<span class="lever"></span>
 				<span>Show votes</span>
 			</label>
 			<label class="switch">
-				<input type="checkbox" name="showcomments">
+				<input type="checkbox" name="showVoteCounts">
+				<span class="lever"></span>
+				<span>Show individual vote counts</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showScore">
+				<span class="lever"></span>
+				<span>Show aggregate score</span>
+			</label>
+			<label class="switch">
+				<input type="checkbox" name="showComments">
 				<span class="lever"></span>
 				<span>Show comment count</span>
 			</label>
-			<label class="switch">
-				<input type="checkbox" name="showfaves">
-				<span class="lever"></span>
-				<span>Show favorite count</span>
-			</label>
 		</section>
 		<footer>
-			Derpi-New Tab<span id="version"></span><br>
-			by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp; <a
-				href="https://github.com/ponydevs/Derpi-NewTab/graphs/contributors">contributors</a><br>
-			<a href="https://github.com/ponydevs/Derpi-NewTab">View source code</a><br>
-			Icons: <a href="https://fontawesome.com/license">Font Awesome Free</a> v5.0.8
+			<p>
+				Derpi-New Tab<span id="version"></span><br>
+				by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp; <a
+					href="https://github.com/ponydevs/Derpi-NewTab/graphs/contributors">contributors</a><br>
+				<a href="https://github.com/ponydevs/Derpi-NewTab">View source code</a><br>
+				Icons: <a href="https://fontawesome.com/license">Font Awesome Free</a> v5.0.8
+			</p>
+			<button id="clear-settings" class="button button--state-danger">Clear all settings</button>
 		</footer>
 	</div>
 </aside>
@@ -70,7 +106,7 @@
 	<div id="image"></div>
 	<div id="image-ghost"></div>
 	<div id="metadata-area">
-		<div id="show-settings-button">
+		<div id="show-settings-button" class="disabled">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
 				<path d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"></path>
 			</svg>
@@ -79,9 +115,9 @@
 	</div>
 </main>
 
-<script src="js/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="></script>
-<script src="js/fa.js"></script>
-<script src="js/script.js"></script>
+<script src="js/vendor/jquery-3.3.1.min.js" defer></script>
+<script src="js/vendor/rxjs.umd.min.js" defer></script>
+<script src="js/index.js" type="module"></script>
 
 </body>
 </html>

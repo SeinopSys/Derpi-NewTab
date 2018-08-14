@@ -1,0 +1,83 @@
+:root {
+	--db-theme-color: #6cb2ea;
+	--db-form-control-bg: #191f2a;
+	--db-form-control-border: #41464e;
+	--db-form-control-hover-bg: #232b3a;
+	--db-form-control-hover-border: #647493;
+	--db-foreground: #e0e0e0;
+	--db-footer-bg: #1d242f;
+	--db-upvote: #5b9b26;
+	--db-downvote: #da3412;
+	--db-comment: #b099dd;
+	--db-fav: #a18e27;
+	--db-link: #478acc;
+	--db-link-hover: #b099dd;
+}
+a, a:active, a:visited {
+	color: var(--db-link);
+	text-decoration: none;
+	cursor: pointer;
+}
+a:hover {
+	color: var(--db-link-hover);
+}
+.button {
+	background-color: var(--db-form-control-bg);
+	border: 1px solid var(--db-form-control-border);
+	box-sizing: border-box;
+	display: inline-block;
+	font-family: verdana, arial, helvetica, sans-serif;
+	font-size: 14px;
+	padding: 4px 6px;
+	border-radius: 0;
+	cursor: pointer;
+}
+.button, .button:active, .button:hover, .button:visited {
+	color: var(--db-foreground);
+}
+.button:hover {
+	background-color: var(--db-form-control-hover-bg);
+	border-color: var(--db-form-control-hover-border);
+}
+.button:disabled {
+    opacity: .7;
+    pointer-events: none;
+}
+.button--state-danger {
+	background-color: #66211f;
+	border-color: #b3312e;
+}
+.button--state-danger:hover {
+	background-color: #521b19;
+	border-color: #9f2c28;
+}
+.tag {
+	background: #1b3c21;
+	color: #4aa158;
+	border: 1px solid #2d6236;
+	display: inline-block;
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 5px;
+	margin-right: 5px;
+	padding: 5px;
+}
+.tag[data-tag-category="rating"] {
+	background: #113456;
+	border-color: #275a8d;
+	color: #418dd9;
+}
+.input {
+	box-sizing: border-box;
+	padding: 6px;
+	border: 1px solid var(--db-form-control-border);
+	font-size: 14px;
+	font-family: "Droid Sans Mono", monospace;
+	color: var(--db-foreground);
+	background: var(--db-form-control-bg);
+	max-width: 100%;
+}
+.input--block {
+	display: block;
+	width: 100%;
+}

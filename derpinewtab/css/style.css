@@ -1,12 +1,12 @@
+@import url("derpibooru.css");
 :root {
 	--sidebar-size: 300px;
-	--upvote-color: #5b9b26;
-	--downvote-color: #da3412;
-	--comment-color: #b099dd;
-	--fav-color: #a18e27;
 }
 :focus {
 	outline: 0;
+}
+.hidden {
+	display: none !important;
 }
 body, html, #image, #image-ghost, #settingsWrap {
 	height: 100%;
@@ -14,31 +14,20 @@ body, html, #image, #image-ghost, #settingsWrap {
 	margin: 0;
 }
 html {
-    background-color: #1d242f;
-    color: #e0e0e0;
+	background-color: #1d242f;
+	color: #e0e0e0;
 }
 body {
-	font-family: sans-serif;
+	font-family: verdana, arial, helvetica, sans-serif;
 	overflow: hidden;
 	background: transparent;
-	font-size: 16px;
-}
-body.loading {
-	background-image: url(loading.svg);
+	font-size: 13px;
 }
 body.sidebar-open #settings-wrap {
 	left: 0;
 }
 body.sidebar-open #viewport {
 	left: var(--sidebar-size);
-}
-a, a:active, a:visited {
-	color: #478acc;
-	text-decoration: none;
-	cursor: pointer;
-}
-a:hover {
-	color: #b099dd;
 }
 #settings-wrap, #viewport {
 	position: absolute;
@@ -51,19 +40,27 @@ a:hover {
 	display: block;
 	left: calc(-1 * var(--sidebar-size));
 	width: var(--sidebar-size);
-	background: transparent;
 	overflow: auto;
 	padding: 10px;
 	box-sizing: border-box;
+	/* No background since this appears outside #viewport and nothing is behind it */
 }
 #viewport {
 	left: 0;
 	width: 100vw;
 	display: flex;
 	flex-flow: column nowrap;
+	background: transparent;
+}
+body.loading #viewport {
+	background-image: url(/img/loading.svg);
+}
+body.no-pony #viewport {
+	background-image: url(/img/no-pony-75.svg);
+	background-size: 256px;
 }
 /*noinspection CssOptimizeSimilarProperties*/
-body, #image {
+#viewport, #image {
 	background-position: center;
 	background-repeat: no-repeat;
 }
@@ -72,18 +69,23 @@ body, #image {
 	right: 0;
 	bottom: 0;
 	background-position: center center;
+	transition: opacity .5s ease-out;
+	opacity: 0;
 }
 #image {
 	z-index: 2;
 	background-size: contain;
-	opacity: 1;
-	transition: opacity .5s ease-out;
 }
 #image-ghost {
 	z-index: 1;
 	display: block;
-	opacity: .3;
 	background-size: cover;
+}
+#viewport.show-images #image {
+	opacity: 1 !important;
+}
+#viewport.show-images #image-ghost {
+	opacity: .3 !important;
 }
 #metadata-area {
 	position: absolute;
@@ -117,7 +119,9 @@ body, #image {
 	flex: 1 1 auto;
 	display: flex;
 	flex-flow: column nowrap;
+	justify-content: space-around;
 	padding: 12px;
+	padding-left: 0;
 	box-sizing: border-box;
 	width: 100%;
 	color: #fff;
@@ -127,17 +131,20 @@ body, #image {
 #data > h1 {
 	margin: 0;
 	font-size: 24px;
-	line-height: 20px;
+	line-height: 1.2em;
 	display: inline-block;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
-	height: 1.1em;
 	font-weight: normal;
 }
-#artist-list a {
+#artist-list {
+	line-height: .9em !important;
 	text-transform: uppercase;
+}
+#artist-list.expand {
+	font-size: 32px;
 }
 #data > p {
 	margin: 0;
@@ -153,10 +160,11 @@ body, #image {
 	display: flex;
 	flex-flow: row nowrap;
 	align-items: center;
-	padding: 3px 5px;
+	padding: 4px 5px;
+	line-height: 1em;
 }
 #metadata-list > :not(:last-child) {
-	margin-right: 3px;
+	margin-right: .3em;
 }
 #metadata-list > a {
 	font-weight: bold;
@@ -165,53 +173,61 @@ body:not(.loading) #metadata-list > a {
 	transition: background .1s ease-in-out, color .1s ease-in-out;
 }
 #metadata-list .upvotes {
-	color: var(--upvote-color);
+	color: var(--db-upvote);
 }
 #metadata-list a.upvotes:hover,
 #metadata-list a.upvotes.active {
-	background: #5b9b26;
-	color: #e0e0e0;
+	background: var(--db-upvote);
+	color: var(--db-foreground);
 }
 #metadata-list .downvotes {
-	color: var(--downvote-color);
+	color: var(--db-downvote);
 }
 #metadata-list a.downvotes:hover,
 #metadata-list a.downvotes.active {
-	background: #da3412;
-	color: #e0e0e0;
+	background: var(--db-downvote);
+	color: var(--db-foreground);
 }
 #metadata-list .comments {
-	color: var(--comment-color);
+	color: var(--db-comment);
 }
 #metadata-list a.comments:hover {
-	background: #b099dd;
-	color: #1d242f;
+	background: var(--db-comment);
+	color: var(--db-footer-bg);
 }
 #metadata-list .faves {
-	color: var(--fav-color);
+	color: var(--db-fav);
 }
 #metadata-list a.faves:hover,
 #metadata-list a.faves.active {
-	background: #a18e27;
-	color: #e0e0e0;
+	background: var(--db-fav);
+	color: var(--db-foreground);
 }
 #metadata-list svg {
 	height: 1em;
 	fill: currentColor;
 }
-#metadata-list svg + span {
+#metadata-list svg + span:not(.hidden) {
 	margin-left: 5px;
 }
 #settings {
-	font-size: 16px;
 	height: 100%;
 }
 #settings header {
-	font-size: 26px;
-	text-align: center;
+	font-size: 2em;
 	margin: 0 0 10px;
-	font-weight: bold;
-	text-transform: uppercase;
+}
+#offline-notice {
+	hyphens: manual;
+	margin-bottom: 10px;
+}
+#offline-notice img {
+	float: left;
+	height: 3.2em;
+	margin: 0 5px 5px 0;
+}
+body.offline #offline-notice {
+	display: block;
 }
 #settings > section:not(:last-of-type) {
 	margin-bottom: 10px;
@@ -223,33 +239,40 @@ body:not(.loading) #metadata-list > a {
 	margin-bottom: 0;
 }
 #settings h2 {
-	font-size: 24px;
+	font-size: 22px;
 	margin: 0 0 5px;
+	font-weight: normal;
 }
-#settings .input.rating-tags label {
+#settings h3 {
+	font-size: 18px;
+	margin: 0 0 5px;
+	font-weight: normal;
+}
+#settings hr {
+	border-color: #41464e;
+}
+#settings .rating-tags {
+	margin-bottom: 10px;
+}
+#settings .rating-tags label {
 	display: inline-block;
 	margin: 2px;
 }
-#settings .input.rating-tags label input {
+#settings .rating-tags label input {
 	display: none;
 }
-#settings .input.rating-tags label input ~ span {
-	display: inline-block;
+#settings .rating-tags label input ~ .tag {
 	cursor: pointer;
-	padding: 4px;
-	font-size: 14px;
-	background: #113456;
-	color: #489df1;
-	border: 2px solid #275a8d;
+	margin: 0;
 }
-#settings .input.rating-tags label input:not(:checked) ~ span {
-	background: #333;
+#settings .rating-tags label input:not(:checked) ~ .tag {
+	background-color: #333;
 	color: #8c8c8c;
 	border-color: #595959;
 	opacity: .75;
 	text-decoration: line-through;
 }
-#settings .input.rating-tags + .warning-block {
+#settings .rating-tags + .warning-block {
 	margin-top: 8px;
 }
 #settings .switch {
@@ -260,7 +283,7 @@ body:not(.loading) #metadata-list > a {
 	user-select: none;
 }
 #settings .switch:not(:last-child) {
-	margin-bottom: 8px;
+	margin-bottom: .5em;
 }
 #settings .switch > input {
 	display: none;
@@ -270,12 +293,12 @@ body:not(.loading) #metadata-list > a {
 	position: relative;
 	--border-width: 2px;
 	border: var(--border-width) solid;
-	--padding: 2px;
+	--padding: 1px;
 	padding: var(--padding);
 	margin-right: .5em;
-	--height: 1em;
+	--height: 1.1em;
 	height: var(--height);
-	--width: calc(var(--height) * 1.8);
+	--width: calc(var(--height) * 1.7);
 	width: var(--width);
 	border-radius: calc(var(--height) / 2);
 	box-sizing: border-box;
@@ -292,20 +315,14 @@ body:not(.loading) #metadata-list > a {
 	height: var(--size);
 	width: var(--size);
 	border-radius: 50%;
-	transition: background-color var(--transition-dur) ease-in-out, left var(--transition-dur) ease-in-out;
-}
-#settings .switch > input:not(:checked) + .lever {
-	background-color: #500;
-}
-#settings .switch > input:not(:checked) + .lever:before {
-	background-color: #fdd;
+	transition: left var(--transition-dur) ease-in-out;
+	background-color: currentColor;
 }
 #settings .switch > input:checked + .lever {
-	background-color: #050;
+	background-color: #070;
 }
 #settings .switch > input:checked + .lever:before {
-	background-color: #dfd;
-	left: calc(var(--width) - var(--size) - var(--border-width) - (var(--padding) * 2));
+	left: calc(var(--width) - var(--size) - (var(--border-width) * 2) - (var(--padding) * 2));
 }
 #settings footer {
 	font-size: 14px;
@@ -315,9 +332,6 @@ body:not(.loading) #metadata-list > a {
 #settings footer #version:empty {
 	display: none;
 }
-#tag-settings p:nth-last-child(2) {
-	margin-bottom: 0 !important;
-}
 .block {
 	padding-left: 5px;
 	border-left: 2px solid;
@@ -326,6 +340,7 @@ body:not(.loading) #metadata-list > a {
 .block.warning-block { color: #ffa }
 .block.error-block { color: #faa }
 .block.success-block { color: #afa }
+.block.theme-block { color: var(--db-theme-color) }
 .block .clear {
 	cursor: pointer;
 	font-weight: bold;
@@ -344,21 +359,21 @@ body:not(.loading) #metadata-list > a {
 	opacity: .6;
 	cursor: not-allowed;
 }
-#action-settings input, #domain-settings select, #domain-settings button {
-	display: block;
-	box-sizing: border-box;
-	padding: 6px;
-	border: 1px solid #41464e;
-	font-size: 14px;
-	color: currentColor;
-	background: #191f2a;
-	width: 100%;
-	transition: background .1s ease-in-out, border .1s ease-in-out;
+#search-settings #search-link {
+	margin-top: 10px;
+}
+#domain-settings #firefox-domain-apply,
+#search-settings #search-link {
+	text-align: center;
 }
 #action-settings input:focus {
 	outline: 0;
 	border: 1px solid #647493;
 	background: #232b3a;
+}
+#clear-settings {
+	display: block;
+	margin: 10px auto 0;
 }
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -370,6 +385,7 @@ body:not(.loading) #metadata-list > a {
 ::-webkit-scrollbar-thumb {
 	background-color: rgba(255, 255, 255, 0.9);
 	border-radius: 4px;
+	border: 1px solid black;
 }
 ::-webkit-scrollbar-thumb:active {
 	background-color: #fff;
@@ -401,6 +417,9 @@ body:not(.loading) #metadata-list > a {
 #dialog-inner {
 	font-family: sans-serif;
 	font-size: 1.5em;
+}
+#dialog-inner .faded {
+	opacity: .5;
 }
 #dialog-inner button {
 	border: 0;
