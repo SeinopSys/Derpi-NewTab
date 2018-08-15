@@ -3,4 +3,4 @@
 
 A simplistic "New tab" page replacement for Google Chrome and Firefox which features pony wallpapers from [Derpibooru.org](http://derpibooru.org/).
 
-<p align="center"><a href="https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" alt="Download Derpi-New Tab from the Chrome Web Store"></a> <a href="https://addons.mozilla.org/en-US/firefox/addon/derpi-newtab/"><img src="https://cdn.rawgit.com/alrra/browser-logos/da2477b1/src/firefox/firefox.svg" height="96" alt="Download Derpi-New Tab from Firefox Add-ons"></a></p>
+<p align="center"><a href="https://chrome.google.com/webstore/detail/derpi-new-tab/noggelkbkffdifgemicnanbkghjkoipl"><img src="https://developer.chrome.com/webstore/images/ChromeWebStore_BadgeWBorder_v2_340x96.png" height="60" alt="Download Derpi-New Tab from the Chrome Web Store"></a> <a href="https://addons.mozilla.org/en-US/firefox/addon/derpi-newtab/"><img src="https://addons.cdn.mozilla.net/static/img/addons-buttons/AMO-button_1.png" height="60" alt="Download Derpi-New Tab from Firefox Add-ons"></a></p>
