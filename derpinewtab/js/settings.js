@@ -9,7 +9,16 @@ export const RATING_TAGS = new Set(['safe', 'suggestive', 'questionable', 'expli
 export const DEFAULT_DOMAIN = 'derpibooru.org';
 export const DOMAINS = new Set([DEFAULT_DOMAIN, 'www.derpibooru.org', 'trixiebooru.org']);
 export const RESOLUTION_CAP = [4096, 4096]; // w, h
-const METADATA_SETTING_KEYS = [
+export const SEARCH_SETTINGS_KEYS = [
+	'tags',
+	'andtags',
+	'exclude',
+	'eqg',
+	'hd',
+	'rescap',
+	'domain',
+];
+export const METADATA_SETTINGS_KEYS = [
 	'showUploader',
 	'showScore',
 	'showVotes',
@@ -17,8 +26,10 @@ const METADATA_SETTING_KEYS = [
 	'showComments',
 	'showFaves',
 ];
-const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS = {
 	tags: ['safe'],
+	andtags: false,
+	exclude: true,
 	eqg: false,
 	hd: true,
 	rescap: true,
@@ -31,67 +42,81 @@ const DEFAULT_SETTINGS = {
 	showFaves: true,
 };
 
-const eqgSource = new BehaviorSubject(DEFAULT_SETTINGS.eqg);
-const hdSource = new BehaviorSubject(DEFAULT_SETTINGS.hd);
-const rescapSource = new BehaviorSubject(DEFAULT_SETTINGS.rescap);
-const domainSource = new BehaviorSubject(DEFAULT_SETTINGS.domain);
-const tagsSource = new BehaviorSubject(DEFAULT_SETTINGS.tags);
-
-const getSearchLink = () => {
-	let size = (hdSource.value ? ['width.gte:1280', 'height.gte:720'] : []);
-	if (rescapSource.value)
-		size = size.concat(['width.lte:' + RESOLUTION_CAP[0], 'height.lte:' + RESOLUTION_CAP[1]]);
-	let query = ['wallpaper', `(${tagsSource.value.join(' || ')})`];
-	if (eqgSource.value !== true)
-		query.push('-equestria girls');
-	if (size.length > 0)
-		query = query.concat(size);
-	return `https://${domainSource.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' && '))}`;
-};
-const searchLinkSource = new BehaviorSubject(getSearchLink());
-const metaSources = {};
-
 class Settings {
 	getEQG() {
-		return eqgSource.value;
+		return this.searchSources.eqg.value;
 	}
 
 	getHD() {
-		return hdSource.value;
+		return this.searchSources.hd.value;
 	}
 
 	getResCap() {
-		return rescapSource.value;
+		return this.searchSources.rescap.value;
 	}
 
 	getDomain() {
-		return domainSource.value;
+		return this.searchSources.domain.value;
 	}
 
 	getTags() {
-		return tagsSource.value;
+		return this.searchSources.tags.value;
 	}
 
 	getSearchLink() {
-		return searchLinkSource.value;
+		return this.searchLinkSource.value;
 	}
 
 	getMeta(key) {
-		return metaSources[key].value;
+		return this.metaSources[key].value;
 	}
 
 	constructor() {
-		this.eqg = eqgSource.asObservable().pipe(distinctUntilChanged());
-		this.hd = hdSource.asObservable().pipe(distinctUntilChanged());
-		this.rescap = rescapSource.asObservable().pipe(distinctUntilChanged());
-		this.domain = domainSource.asObservable().pipe(distinctUntilChanged());
-		this.tags = tagsSource.asObservable().pipe(distinctUntilChanged());
-		this.searchLink = searchLinkSource.asObservable().pipe(distinctUntilChanged());
-
-		METADATA_SETTING_KEYS.forEach(key => {
-			metaSources[key] = new BehaviorSubject(true);
-			this[key] = metaSources[key].asObservable().pipe(distinctUntilChanged());
+		this.searchSources = {};
+		SEARCH_SETTINGS_KEYS.forEach(key => {
+			this.searchSources[key] = new BehaviorSubject(DEFAULT_SETTINGS[key]);
+			this[key] = this.searchSources[key].asObservable().pipe(distinctUntilChanged());
 		});
+
+		this.metaSources = {};
+		METADATA_SETTINGS_KEYS.forEach(key => {
+			this.metaSources[key] = new BehaviorSubject(DEFAULT_SETTINGS[key]);
+			this[key] = this.metaSources[key].asObservable().pipe(distinctUntilChanged());
+		});
+
+		this.searchLinkSource = new BehaviorSubject(this._generateSearchLink());
+		this.searchLink = this.searchLinkSource.asObservable().pipe(distinctUntilChanged());
+	}
+
+	/** @private */
+	_getTagsQuery() {
+		const allowedQuery = new Set(this.searchSources.tags.value);
+		const finalQuery = [
+			Array.from(allowedQuery).join(this.searchSources.andtags.value !== true ? ' || ' : ' && ')
+		];
+		if (this.searchSources.exclude.value === true){
+			const hiddenQuery = [];
+			for (let tag of RATING_TAGS)
+				if (!allowedQuery.has(tag))
+					hiddenQuery.push(`-${tag}`);
+			if (hiddenQuery.length > 0)
+				finalQuery.push(hiddenQuery.join(' && '));
+			return `(${finalQuery.join(') && (')})`;
+		}
+		else return `(${finalQuery[0]})`;
+	}
+
+	/** @private */
+	_generateSearchLink() {
+		let size = (this.searchSources.hd.value ? ['width.gte:1280', 'height.gte:720'] : []);
+		if (this.searchSources.rescap.value === true)
+			size = size.concat([`width.lte:${RESOLUTION_CAP[0]}`, `height.lte:${RESOLUTION_CAP[1]}`]);
+		let query = ['wallpaper', this._getTagsQuery()];
+		if (this.searchSources.eqg.value !== true)
+			query.push('-equestria girls');
+		if (size.length > 0)
+			query = query.concat(size);
+		return `https://${this.searchSources.domain.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' && '))}`;
 	}
 
 	async init() {
@@ -150,14 +175,12 @@ class Settings {
 			this._settings = $.extend({}, DEFAULT_SETTINGS, this._settings, obj);
 			localStorage.setItem(LS_KEY, JSON.stringify(this._settings));
 
-			eqgSource.next(this._settings.eqg);
-			hdSource.next(this._settings.hd);
-			rescapSource.next(this._settings.rescap);
-			domainSource.next(this._settings.domain);
-			tagsSource.next(this._settings.tags);
-			searchLinkSource.next(getSearchLink());
-			METADATA_SETTING_KEYS.forEach(key => {
-				metaSources[key].next(this._settings[key]);
+			SEARCH_SETTINGS_KEYS.forEach(key => {
+				this.searchSources[key].next(this._settings[key]);
+			});
+			this.searchLinkSource.next(this._generateSearchLink());
+			METADATA_SETTINGS_KEYS.forEach(key => {
+				this.metaSources[key].next(this._settings[key]);
 			});
 		}
 		else {
@@ -191,16 +214,9 @@ class Settings {
 							});
 					}
 					return;
-				case 'eqg':
-				case 'hd':
-				case 'rescap':
-				case 'showUploader':
-				case 'showScore':
-				case 'showVotes':
-				case 'showVoteCounts':
-				case 'showComments':
-				case 'showFaves':
-					target[name] = Boolean(value);
+				default:
+					if (SEARCH_SETTINGS_KEYS.includes(name) || METADATA_SETTINGS_KEYS.includes(name))
+						target[name] = Boolean(value);
 					break;
 			}
 
@@ -231,13 +247,8 @@ class Settings {
 		const tempSettings = this._tmpSettings;
 		const verifiedSettings = {};
 
-		await this._setSetting('eqg', tempSettings, verifiedSettings);
-		await this._setSetting('hd', tempSettings, verifiedSettings);
-		await this._setSetting('tags', tempSettings, verifiedSettings);
-		await this._setSetting('domain', tempSettings, verifiedSettings);
-		METADATA_SETTING_KEYS.forEach(async key => {
+		for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS))
 			await this._setSetting(key, tempSettings, verifiedSettings);
-		});
 
 		this.setSettings(verifiedSettings);
 	}

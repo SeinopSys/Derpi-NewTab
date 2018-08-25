@@ -24,10 +24,6 @@ class LocalCache {
 	}
 
 	async init() {
-		Settings.domain.subscribe(() => {
-			this.updateInteractions();
-		});
-
 		const cacheLS = localStorage.getItem(LS_KEY);
 		if (cacheLS !== null){
 			this._cache = $.extend(true, DEFAULT_DATA, JSON.parse(cacheLS));

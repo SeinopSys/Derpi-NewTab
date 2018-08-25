@@ -15,9 +15,13 @@
 			<img src="img/no-pony-100.svg">
 			<strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
 		</div>
+		<section>
+			<h2>Filters</h2>
+			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a> (the <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> filter is used if you aren't logged in). You have to enable/disable specific system tags above individually regardless of your filter setting.</p>
+		</section>
 		<section id="domain-settings">
 			<h2>Preferred domain</h2>
-			<p>Derpibooru can be accessed from multiple domains. Because this extension communicates with the site, you might want to change the domain to the one you typically use.</p>
+			<p>Derpibooru can be accessed from multiple domains. You should set this to the domain you prefer to let you use the voting buttons and for your current filter to apply when searching.</p>
 			<select class="input input--block"></select>
 			<button id="firefox-domain-apply" class="button input--block" disabled>Apply</button>
 		</section>
@@ -30,6 +34,18 @@
 			<div class="block error-block" id="no-rating-tags">You need to select at least one rating tag.</div>
 			<h3>Restrictions</h3>
 			<label class="switch">
+				<input type="checkbox" name="andtags">
+				<span class="lever"></span>
+				<span>Use <code>&amp;&amp;</code> between selected tags</span>
+			</label>
+			<p>Changes the default <code>||</code> separator between selected tags in the search query. Turning this on will require all tags you've enabled (instead of at least one) to be present on an image for it to display. Some tags are mutually exclusive; selecting them with this on can produce no results. Consult the <a href="https://domain.tld/pages/tags" class="anchor-domain">Tag Guidelines</a> for more information.</p>
+			<label class="switch">
+				<input type="checkbox" name="exclude">
+				<span class="lever"></span>
+				<span>Exclude unselected tags</span>
+			</label>
+			<p>Tags like grimdark and explicit are often used together, which means that selecting either one could give you results with both tags. For this reason, as of v2.3.2 tags that are not selected will be excluded from the search. You can turn this off to revert to the old behavior.</p>
+			<label class="switch">
 				<input type="checkbox" name="showeqg">
 				<span class="lever"></span>
 				<span>Show <abbr title="Equestria Girls">EQG</abbr>-related images</span>
@@ -40,7 +56,7 @@
 				<span class="lever"></span>
 				<span>Require 720p+ resolution</span>
 			</label>
-			<p>This on will keep low res images from appearing in the new tab page.</p>
+			<p>Turn this off to allow displaying low resolution images.</p>
 			<label class="switch">
 				<input type="checkbox" name="rescap">
 				<span class="lever"></span>
@@ -50,10 +66,6 @@
 			<hr>
 			<p>You can use the button below to open the search query used by the extension on the Derpibooru website.</p>
 			<a id="search-link" class="button input--block" target="_blank">Open search page</a>
-		</section>
-		<section>
-			<h2>Filters</h2>
-			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a>. You have to enable/disable specific system tags above individually regardless of your filter setting.</p>
 		</section>
 		<section id="metadata-settings">
 			<h2>Metabar</h2>

@@ -1,4 +1,4 @@
-import Settings, { DOMAINS, RATING_TAGS, RESOLUTION_CAP } from './settings.js';
+import Settings, { DOMAINS, RATING_TAGS, RESOLUTION_CAP, SEARCH_SETTINGS_KEYS } from './settings.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
 import { isFirefox } from './firefox-detector.js';
@@ -6,6 +6,15 @@ import { requestDomainPermission } from './perms.js';
 import fa from './fa.js';
 import { vote, fave } from './interactions.js';
 import Connectivity from './connectivity.js';
+import setHelper from './set-helper.js';
+
+const SEARCH_SETTINGS_CHECKBOX_KEYS = (() => {
+	const SEARCH_SETTINGS_NON_CHECKBOX_KEYS = new Set(['tags','domain']);
+
+	return Array.from(
+		setHelper.difference(new Set(SEARCH_SETTINGS_KEYS), SEARCH_SETTINGS_NON_CHECKBOX_KEYS)
+	);
+})();
 
 class Extension {
 	constructor() {
@@ -31,9 +40,10 @@ class Extension {
 		this.$ratingTags = this.$settings.find('.rating-tags');
 		this.$domainSelect = this.$domainSettings.find('select');
 		this.$metaToggles = this.$metaSettings.find('.switch input');
-		this.$showEQGInput = this.$searchSettings.find('input[name="showeqg"]');
-		this.$hdInput = this.$searchSettings.find('input[name="hd"]');
-		this.$rescapInput = this.$searchSettings.find('input[name="rescap"]');
+		this.searchSettingsInputs = {};
+		SEARCH_SETTINGS_CHECKBOX_KEYS.forEach(key => {
+			this.searchSettingsInputs[key] = this.$searchSettings.find(`input[name="${key}"]`);
+		});
 
 		this.updatingImage = false;
 		this.fetchController = null;
@@ -57,9 +67,6 @@ class Extension {
 		this.createSubscriptions();
 		this.attachEventHandlers();
 		this.handleFirstRun();
-
-		this.displayImageData();
-		this.updateImage();
 	}
 
 	createElements() {
@@ -90,6 +97,7 @@ class Extension {
 
 		Settings.searchLink.subscribe(link => {
 			this.$searchLink.attr('href', link.replace('.json?perpage=5&', '?'));
+			this.updateImage();
 		});
 		Settings.domain.subscribe(domain => {
 			if (isFirefox)
@@ -97,9 +105,9 @@ class Extension {
 			csrfToken.clear();
 			this.updateDomainsOnPage(domain);
 		});
-		Settings.eqg.subscribe(checked => this.$showEQGInput.prop('checked', checked));
-		Settings.hd.subscribe(checked => this.$hdInput.prop('checked', checked));
-		Settings.rescap.subscribe(checked => this.$rescapInput.prop('checked', checked));
+		SEARCH_SETTINGS_CHECKBOX_KEYS.forEach(key => {
+			Settings[key].subscribe(checked => this.searchSettingsInputs[key].prop('checked', checked));
+		});
 		this.$metaToggles.each((_, el) => {
 			const { name } = el;
 			Settings[name].subscribe(value => {
@@ -298,7 +306,7 @@ class Extension {
 			});
 		}).catch(msgs => {
 			if (!Array.isArray(msgs)){
-				if (msgs.indexOf('abort') !== -1){
+				if (String(msgs).indexOf('abort') !== -1){
 					done();
 					return;
 				}
@@ -308,7 +316,7 @@ class Extension {
 			this.$body.removeClass('loading');
 			this.$data.html(`<h1>${msgs[0]}</h1>`);
 			if (msgs.length > 1)
-				this.$data.appendChild(`<p>${msgs[1]}</p>`);
+				this.$data.append(`<p>${msgs[1]}</p>`);
 			done();
 		});
 	}
@@ -327,9 +335,8 @@ class Extension {
 		this.$noRatingTags.stop().slideUp();
 
 		await Settings.setSetting('tags', tagArray);
-		await Settings.setSetting('eqg', this.$showEQGInput.prop('checked'));
-		await Settings.setSetting('hd', this.$hdInput.prop('checked'));
-		await Settings.setSetting('rescap', this.$rescapInput.prop('checked'));
+		for (let key of SEARCH_SETTINGS_CHECKBOX_KEYS)
+			await Settings.setSetting(key, this.searchSettingsInputs[key].prop('checked'));
 
 		this.hideImages();
 		this.updateImage();
@@ -343,7 +350,7 @@ class Extension {
 				$el.attr('data-href', $el.attr('href'));
 			$el.attr('href', $el.attr('data-href').replace('domain.tld', domain));
 		});
-		$('.contents-domain').html(domain);
+		$('.contents-domain').html(domain.replace('derpi','der&shy;pi&shy;').replace('trixie','trix&shy;ie&shy;'));
 	}
 
 	displayImageData(imageData = Cache.getImageData()) {
