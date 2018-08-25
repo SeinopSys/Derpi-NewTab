@@ -33,16 +33,20 @@ const DEFAULT_SETTINGS = {
 
 const eqgSource = new BehaviorSubject(DEFAULT_SETTINGS.eqg);
 const hdSource = new BehaviorSubject(DEFAULT_SETTINGS.hd);
-const rescapSource = new BehaviorSubject(DEFAULT_SETTINGS.hd);
+const rescapSource = new BehaviorSubject(DEFAULT_SETTINGS.rescap);
 const domainSource = new BehaviorSubject(DEFAULT_SETTINGS.domain);
 const tagsSource = new BehaviorSubject(DEFAULT_SETTINGS.tags);
 
 const getSearchLink = () => {
 	let size = (hdSource.value ? ['width.gte:1280', 'height.gte:720'] : []);
 	if (rescapSource.value)
-		size = size.concat(['width.lte:'+RESOLUTION_CAP[0], 'height.lte:'+RESOLUTION_CAP[1]]);
-	const query = `wallpaper && (${tagsSource.value.join(' || ')})${eqgSource.value !== true ? ' && -equestria girls' : ''} && ${size.join(' && ')}`;
-	return `https://${domainSource.value}/search.json?perpage=5&q=${encodeURIComponent(query)}`;
+		size = size.concat(['width.lte:' + RESOLUTION_CAP[0], 'height.lte:' + RESOLUTION_CAP[1]]);
+	let query = ['wallpaper', `(${tagsSource.value.join(' || ')})`];
+	if (eqgSource.value !== true)
+		query.push('-equestria girls');
+	if (size.length > 0)
+		query = query.concat(size);
+	return `https://${domainSource.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' && '))}`;
 };
 const searchLinkSource = new BehaviorSubject(getSearchLink());
 const metaSources = {};
@@ -55,6 +59,7 @@ class Settings {
 	getHD() {
 		return hdSource.value;
 	}
+
 	getResCap() {
 		return rescapSource.value;
 	}
@@ -71,7 +76,7 @@ class Settings {
 		return searchLinkSource.value;
 	}
 
-	getMeta(key){
+	getMeta(key) {
 		return metaSources[key].value;
 	}
 
@@ -147,7 +152,7 @@ class Settings {
 
 			eqgSource.next(this._settings.eqg);
 			hdSource.next(this._settings.hd);
-			rescapSource.next(this._settings.hd);
+			rescapSource.next(this._settings.rescap);
 			domainSource.next(this._settings.domain);
 			tagsSource.next(this._settings.tags);
 			searchLinkSource.next(getSearchLink());
@@ -161,7 +166,7 @@ class Settings {
 	}
 
 	async _setSetting(name, source, target, strict = false) {
-		return new Promise((res,rej) => {
+		return new Promise((res, rej) => {
 			const sourceIsObject = !Array.isArray(source) && source === Object(source);
 			const value = sourceIsObject ? source[name] : source;
 			if (value === undefined)
@@ -203,7 +208,7 @@ class Settings {
 		});
 	}
 
-	async setSetting(key, value){
+	async setSetting(key, value) {
 		const verifiedSettings = {};
 		await this._setSetting(key, value, verifiedSettings, true);
 
@@ -211,7 +216,7 @@ class Settings {
 	}
 
 	/* Toggle a boolean setting's value */
-	async toggleSetting(key){
+	async toggleSetting(key) {
 		const verifiedSettings = {};
 		await this._setSetting(key, !this._settings[key], verifiedSettings, true);
 
