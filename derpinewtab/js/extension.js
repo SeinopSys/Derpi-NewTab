@@ -288,6 +288,7 @@ class Extension {
 		Cache.updateImageData(this.fetchController.signal).then(image => {
 			const cachedImageData = Cache.getImageData();
 			if (cachedImageData.sha512_hash === image.sha512_hash){
+				Cache.setImageData(image);
 				this.showImages();
 				done();
 				return;
