@@ -92,7 +92,7 @@ class Settings {
 	_getTagsQuery() {
 		const allowedQuery = new Set(this.searchSources.tags.value);
 		const finalQuery = [
-			Array.from(allowedQuery).join(this.searchSources.andtags.value !== true ? ' || ' : ' && ')
+			Array.from(allowedQuery).join(this.searchSources.andtags.value !== true ? ' OR ' : ' AND ')
 		];
 		if (this.searchSources.exclude.value === true){
 			const hiddenQuery = [];
@@ -100,8 +100,8 @@ class Settings {
 				if (!allowedQuery.has(tag))
 					hiddenQuery.push(`-${tag}`);
 			if (hiddenQuery.length > 0)
-				finalQuery.push(hiddenQuery.join(' && '));
-			return `(${finalQuery.join(') && (')})`;
+				finalQuery.push(hiddenQuery.join(' AND '));
+			return `(${finalQuery.join(') AND (')})`;
 		}
 		else return `(${finalQuery[0]})`;
 	}
@@ -116,7 +116,7 @@ class Settings {
 			query.push('-equestria girls');
 		if (size.length > 0)
 			query = query.concat(size);
-		return `https://${this.searchSources.domain.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' && '))}`;
+		return `https://${this.searchSources.domain.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' AND ')).replace(/%20/g, '+')}`;
 	}
 
 	async init() {
