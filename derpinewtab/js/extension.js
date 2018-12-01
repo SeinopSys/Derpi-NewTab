@@ -4,7 +4,7 @@ import Cache from './local-cache.js';
 import { isFirefox } from './firefox-detector.js';
 import { requestDomainPermission } from './perms.js';
 import fa from './fa.js';
-import { vote, fave } from './interactions.js';
+import { vote, fave, hide } from './interactions.js';
 import Connectivity from './connectivity.js';
 import setHelper from './set-helper.js';
 
@@ -113,16 +113,16 @@ class Extension {
 			Settings[name].subscribe(value => {
 				setTimeout(() => {
 					el.checked = value;
-					this.$data.find('.' + name.replace(/^show/, '').toLowerCase())[value ? 'removeClass' : 'addClass']('hidden');
+					this.$data.find('.' + name.replace(/^show/, '').toLowerCase()).classIf(!value, 'hidden');
 					const showingMetaCount = this.$metaToggles.filter(':checked').length;
-					$('#artist-list')[showingMetaCount === 0 ? 'addClass' : 'removeClass']('expand');
-					$('#metadata-list')[showingMetaCount === 0 ? 'hide' : 'show']();
+					$('#artist-list').classIf(showingMetaCount === 0, 'expand');
+					$('#metadata-list').toggle(showingMetaCount !== 0);
 				});
 			});
 		});
 
 		Connectivity.online.subscribe(online => {
-			this.$body[online ? 'removeClass' : 'addClass']('offline');
+			this.$body.classIf(!online, 'offline');
 			if (!Cache.getImageData().id)
 				this.updateImage();
 		});
@@ -180,7 +180,7 @@ class Extension {
 			const $this = $(this);
 			const active = $this.hasClass('active');
 			vote(active ? 'false' : 'up').then(() => {
-				$this[active ? 'removeClass' : 'addClass']('active');
+				$this.classIf(!active, 'active');
 				const down = active ? undefined : false;
 				Cache.setInteractions({ up: !active, down });
 			});
@@ -189,7 +189,7 @@ class Extension {
 			const $this = $(this);
 			const active = $this.hasClass('active');
 			vote(active ? 'false' : 'down').then(() => {
-				$this[active ? 'removeClass' : 'addClass']('active');
+				$this.classIf(!active, 'active');
 				const up = active ? void 0 : false;
 				Cache.setInteractions({ down: !active, up });
 			});
@@ -198,10 +198,18 @@ class Extension {
 			const $this = $(this);
 			const active = $this.hasClass('active');
 			fave(active ? 'false' : 'true').then(() => {
-				$this[active ? 'removeClass' : 'addClass']('active');
+				$this.classIf(!active, 'active');
 				const up = !active ? true : undefined;
 				const down = !active ? false : undefined;
 				Cache.setInteractions({ fave: !active, up, down });
+			});
+		});
+		this.$data.on('click', '.hide', function() {
+			const $this = $(this);
+			const active = $this.hasClass('active');
+			hide(active ? 'false' : 'true').then(() => {
+				$this.classIf(!active, 'active');
+				Cache.setInteractions({ hide: !active });
 			});
 		});
 	}
@@ -385,22 +393,24 @@ class Extension {
 					<span class="score"><span>${score}</span></span>
 					<a class="downvotes votes${interactions.down ? ' active' : ''}">${fa.arrowDown}<span class="votecounts">${imageData.downvotes}</span></a>
 					<a class="comments" id="view-comments">${fa.comments}<span>${imageData.comment_count}</span></a>
+					<a class="hide">${fa.eyeSlash}</a>
 				</p>`
 			);
 		}
 		else {
 			$metadataList.children('.uploader')
 				.children().last().text(imageData.uploader);
-			$metadataList.children('.faves')[interactions.fave ? 'addClass' : 'removeClass']('active')
+			$metadataList.children('.faves').classIf(interactions.fave, 'active')
 				.children().last().html(imageData.faves);
-			$metadataList.children('.upvotes')[interactions.up ? 'addClass' : 'removeClass']('active')
+			$metadataList.children('.upvotes').classIf(interactions.up, 'active')
 				.children().last().html(imageData.upvotes);
 			$metadataList.children('.score')
 				.children().last().html(score);
-			$metadataList.children('.downvotes')[interactions.down ? 'addClass' : 'removeClass']('active')
+			$metadataList.children('.downvotes').classIf(interactions.down, 'active')
 				.children().last().html(imageData.downvotes);
 			$metadataList.children('.comments')
 				.children().last().html(imageData.comment_count);
+			$metadataList.children('.hide').classIf(interactions.hide, 'active');
 		}
 
 		this.setBackgroundStyles(imageData);

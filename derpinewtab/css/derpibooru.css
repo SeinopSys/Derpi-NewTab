@@ -8,6 +8,7 @@
 	--db-footer-bg: #1d242f;
 	--db-upvote: #5b9b26;
 	--db-downvote: #da3412;
+	--db-hide: var(--db-downvote);
 	--db-comment: #b099dd;
 	--db-fav: #a18e27;
 	--db-link: #478acc;

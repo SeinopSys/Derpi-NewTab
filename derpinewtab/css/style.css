@@ -203,6 +203,14 @@ body:not(.loading) #metadata-list > a {
 	background: var(--db-fav);
 	color: var(--db-foreground);
 }
+#metadata-list .hide {
+	color: var(--db-hide);
+}
+#metadata-list a.hide:hover,
+#metadata-list a.hide.active {
+	background: var(--db-hide);
+	color: var(--db-foreground);
+}
 #metadata-list svg {
 	height: 1em;
 	fill: currentColor;

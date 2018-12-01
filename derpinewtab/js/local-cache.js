@@ -11,6 +11,7 @@ const DEFAULT_DATA = {
 		up: false,
 		down: false,
 		fave: false,
+		hide: false,
 	},
 };
 
@@ -112,6 +113,7 @@ class LocalCache {
 						up: false,
 						down: false,
 						fave: false,
+						hide: false,
 					};
 					interactions.forEach(interact => {
 						switch (interact.interaction_type){
@@ -120,6 +122,9 @@ class LocalCache {
 								break;
 							case "faved":
 								votes.fave = true;
+								break;
+							case "hidden":
+								votes.hide = true;
 								break;
 						}
 					});

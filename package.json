@@ -1,13 +1,12 @@
 {
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SeinopSys/Derpi-NewTab.git"
   },
   "license": "MIT",
-  "dependencies": {
-    "eslint": "^5.3.0"
-  },
   "devDependencies": {
+    "eslint": "^5.3.0",
     "@types/rx": "^4.1.1"
   }
 }

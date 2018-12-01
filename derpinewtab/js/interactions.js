@@ -117,3 +117,7 @@ export function fave(way) {
 export function vote(way) {
 	return interact('vote', way);
 }
+
+export function hide(way) {
+	return interact('hide', way);
+}

@@ -25,6 +25,7 @@ export const METADATA_SETTINGS_KEYS = [
 	'showVoteCounts',
 	'showComments',
 	'showFaves',
+	'showHide',
 ];
 export const DEFAULT_SETTINGS = {
 	tags: ['safe'],
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS = {
 	showVoteCounts: true,
 	showComments: true,
 	showFaves: true,
+	showHide: true,
 };
 
 class Settings {

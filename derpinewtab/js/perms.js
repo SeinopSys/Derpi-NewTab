@@ -1,5 +1,5 @@
 import { isFirefox } from './firefox-detector.js';
-import {DEFAULT_DOMAIN } from './settings.js';
+import { DEFAULT_DOMAIN } from './settings.js';
 
 function permissionAction(perm, action) {
 	if (isFirefox)

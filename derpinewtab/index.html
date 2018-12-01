@@ -12,7 +12,7 @@
 	<div id="settings">
 		<header>Settings</header>
 		<div id="offline-notice" class="block theme-block">
-			<img src="img/no-pony-100.svg">
+			<img src="img/no-pony-100.svg" alt="Offline illustration">
 			<strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
 		</div>
 		<section>
@@ -64,7 +64,7 @@
 			</label>
 			<p>By default a resolution cap of <span id="rescap-width"></span>&times;<span id="rescap-height"></span> is enforced to avoid freezing your browser when it tries to load an absurdly large wallpaper. You may choose to turn this off, but be prepared for potential lag should someone upload an 8k+ image.</p>
 			<hr>
-			<p>You can use the button below to open the search query used by the extension on the Derpibooru website.</p>
+			<p>You can use the button below to open the search query used by the extension on the Derpibooru website. If you've accidentally hidden an image and reloaded you can use this page to undo it; just click the "Show Hidden" link in the top right.</p>
 			<a id="search-link" class="button input--block" target="_blank">Open search page</a>
 		</section>
 		<section id="metadata-settings">
@@ -100,6 +100,11 @@
 				<span class="lever"></span>
 				<span>Show comment count</span>
 			</label>
+			<label class="switch">
+				<input type="checkbox" name="showHide">
+				<span class="lever"></span>
+				<span>Show hide button</span>
+			</label>
 		</section>
 		<footer>
 			<p>
@@ -129,6 +134,7 @@
 
 <script src="js/vendor/jquery-3.3.1.min.js" defer></script>
 <script src="js/vendor/rxjs.umd.min.js" defer></script>
+<script src="js/conditional-class.js" defer></script>
 <script src="js/index.js" type="module"></script>
 
 </body>
