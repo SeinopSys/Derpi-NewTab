@@ -90,7 +90,7 @@ class LocalCache {
 						'.score': 'score',
 						'.interaction--upvote .upvotes': 'upvotes',
 						'.interaction--downvote .downvotes': 'downvotes',
-						'.interaction--fave .favourites': 'faves',
+						'.interaction--fave .favorites': 'faves',
 						'.interaction--comments .comments_count': 'comment_count',
 					}, (sel, key) => {
 						const val = $el.find(sel).text();
