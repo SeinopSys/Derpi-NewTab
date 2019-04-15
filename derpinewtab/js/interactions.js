@@ -2,6 +2,7 @@ import Settings from './settings.js';
 import { isFirefox } from './firefox-detector.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
+import { requestPermissions, checkPermissions } from './perms.js';
 
 const fpCookieName = '_booru_fpr';
 const cookieUrl = `https://${Settings.getDomain()}/`;
@@ -110,14 +111,19 @@ function interact(endpoint, value) {
 	});
 }
 
+function requestCookiePermission() {
+	const permissions = ['cookies'];
+	return checkPermissions(permissions).catch(() => requestPermissions(permissions));
+}
+
 export function fave(way) {
-	return interact('fave', way);
+	return requestCookiePermission().then(() => interact('fave', way));
 }
 
 export function vote(way) {
-	return interact('vote', way);
+	return requestCookiePermission().then(() => interact('vote', way));
 }
 
 export function hide(way) {
-	return interact('hide', way);
+	return requestCookiePermission().then(() => interact('hide', way));
 }

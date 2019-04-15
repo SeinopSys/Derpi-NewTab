@@ -172,6 +172,13 @@ body.no-pony #viewport {
 body:not(.loading) #metadata-list > a {
 	transition: background .1s ease-in-out, color .1s ease-in-out;
 }
+#metadata-list .id {
+	color: #ddd;
+}
+#metadata-list .id span {
+	user-select: all;
+	-moz-user-select: all;
+}
 #metadata-list .upvotes {
 	color: var(--db-upvote);
 }

@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Derpi-New Tab",
 	"description": "A new tab page replacement featuring the latest pony wallpaper from Derpibooru",
-	"version": "2.3.5",
+	"version": "2.4.0",
 	"applications": {
 		"gecko": {
 			"strict_min_version": "60.0"
@@ -10,12 +10,12 @@
 	},
 	"permissions": [
 		"https://derpibooru.org/",
-		"https://derpicdn.net/",
-		"cookies"
+		"https://derpicdn.net/"
 	],
 	"optional_permissions": [
 		"https://www.derpibooru.org/",
-		"https://trixiebooru.org/"
+		"https://trixiebooru.org/",
+		"cookies"
 	],
 	"icons": {
 		"16": "img/16.png",

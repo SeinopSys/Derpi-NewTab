@@ -4,11 +4,9 @@ import { DEFAULT_DOMAIN } from './settings.js';
 function permissionAction(perm, action) {
 	if (isFirefox)
 		return browser.permissions[action](perm)
-			.then(result => {
-				return new Promise((res, rej) => {
-					permissionCallback(result, res, rej);
-				});
-			});
+			.then(result => new Promise((res, rej) => {
+				permissionCallback(result, res, rej);
+			}));
 
 	return new Promise((res, rej) => {
 		chrome.permissions[action](perm, result => {
@@ -23,7 +21,10 @@ function permissionCallback(result, res, rej) {
 	else rej();
 }
 
-// noinspection JSUnusedLocalSymbols
+export function checkPermissions(permissions) {
+	return permissionAction({ permissions }, 'contains');
+}
+
 export function requestPermissions(permissions) {
 	return permissionAction({ permissions }, 'request');
 }
@@ -34,7 +35,6 @@ function domainPermissionAction(domain, action) {
 	return permissionAction(perm, action);
 }
 
-// noinspection JSUnusedLocalSymbols
 export function checkDomainPermissions(domain) {
 	return domainPermissionAction(domain, 'contains');
 }

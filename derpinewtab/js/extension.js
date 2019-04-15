@@ -1,4 +1,10 @@
-import Settings, { DOMAINS, RATING_TAGS, RESOLUTION_CAP, SEARCH_SETTINGS_KEYS } from './settings.js';
+import Settings, {
+	DOMAINS,
+	RATING_TAGS,
+	RESOLUTION_CAP,
+	SEARCH_SETTINGS_KEYS,
+	METADATA_SETTINGS_KEYS
+} from './settings.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
 import { isFirefox } from './firefox-detector.js';
@@ -15,6 +21,17 @@ const SEARCH_SETTINGS_CHECKBOX_KEYS = (() => {
 		setHelper.difference(new Set(SEARCH_SETTINGS_KEYS), SEARCH_SETTINGS_NON_CHECKBOX_KEYS)
 	);
 })();
+
+export const METADATA_SETTING_NAMES = {
+	showId: 'Show image ID',
+	showUploader: 'Show uploader',
+	showScore: 'Show aggregate score',
+	showVotes: 'Show votes',
+	showVoteCounts: 'Show individual vote counts',
+	showComments: 'Show comment count',
+	showFaves: 'Show favorite count',
+	showHide: 'Show hide button',
+};
 
 class Extension {
 	constructor() {
@@ -39,7 +56,6 @@ class Extension {
 
 		this.$ratingTags = this.$settings.find('.rating-tags');
 		this.$domainSelect = this.$domainSettings.find('select');
-		this.$metaToggles = this.$metaSettings.find('.switch input');
 		this.searchSettingsInputs = {};
 		SEARCH_SETTINGS_CHECKBOX_KEYS.forEach(key => {
 			this.searchSettingsInputs[key] = this.$searchSettings.find(`input[name="${key}"]`);
@@ -89,6 +105,22 @@ class Extension {
 		DOMAINS.forEach(domain => {
 			this.$domainSelect.append(`<option ${domain === currentDomain ? 'selected' : ''}>${domain}</option>`);
 		});
+
+		// Metadata settings
+		METADATA_SETTINGS_KEYS.forEach(key => {
+			const settingValue = Settings.getMetaByKey(key);
+			this.$metaSettings.append(
+				$(document.createElement('label')).attr('class','switch').append(
+					$(document.createElement('input')).attr({
+						type: 'checkbox',
+						name: key,
+					}).prop('checked', settingValue),
+					`<span class="lever"></span>`,
+					$(document.createElement('span')).text(METADATA_SETTING_NAMES[key])
+				)
+			)
+		});
+		this.$metaToggles = this.$metaSettings.find('.switch input');
 	}
 
 	createSubscriptions() {
@@ -387,6 +419,7 @@ class Extension {
 		if (!$metadataList.length){
 			this.$data.append(
 				`<p id="metadata-list">
+					<span class="id">${fa.hashtag}<span>${imageData.id}</span></span>
 					<span class="uploader">${fa.upload}<span>${imageData.uploader.replace(/</g, '&lt;')}</span></span>
 					<a class="faves${interactions.fave ? ' active' : ''}">${fa.star}<span>${imageData.faves}</span></a>
 					<a class="upvotes votes${interactions.up ? ' active' : ''}">${fa.arrowUp}<span class="votecounts">${imageData.upvotes}</span></a>

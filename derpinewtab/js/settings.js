@@ -19,12 +19,13 @@ export const SEARCH_SETTINGS_KEYS = [
 	'domain',
 ];
 export const METADATA_SETTINGS_KEYS = [
+	'showId',
 	'showUploader',
+	'showFaves',
 	'showScore',
 	'showVotes',
 	'showVoteCounts',
 	'showComments',
-	'showFaves',
 	'showHide',
 ];
 export const DEFAULT_SETTINGS = {
@@ -35,12 +36,13 @@ export const DEFAULT_SETTINGS = {
 	hd: true,
 	rescap: true,
 	domain: DEFAULT_DOMAIN,
+	showId: true,
 	showUploader: true,
+	showFaves: true,
 	showScore: true,
 	showVotes: true,
 	showVoteCounts: true,
 	showComments: true,
-	showFaves: true,
 	showHide: true,
 };
 
@@ -69,7 +71,7 @@ class Settings {
 		return this.searchLinkSource.value;
 	}
 
-	getMeta(key) {
+	getMetaByKey(key) {
 		return this.metaSources[key].value;
 	}
 
