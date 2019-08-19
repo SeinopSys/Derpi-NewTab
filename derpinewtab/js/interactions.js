@@ -2,16 +2,16 @@ import Settings from './settings.js';
 import { isFirefox } from './firefox-detector.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
-import { requestPermissions, checkPermissions } from './perms.js';
+import { requestPermissions } from './perms.js';
 
-const fpCookieName = '_booru_fpr';
+const sesCookieName = '_ses';
 const cookieUrl = `https://${Settings.getDomain()}/`;
-const fallbackFp = 'bburu8b1123ef6d07ddc56277ae80e88d';
-const getFpCookie = () => {
+const fallbackSes = 'bburu8b1123';
+const getSesCookie = () => {
 	let res;
 
 	const getObject = {
-		name: fpCookieName,
+		name: sesCookieName,
 		url: cookieUrl,
 	};
 	const handleCookie = existingCookie => {
@@ -25,12 +25,12 @@ const getFpCookie = () => {
 		res = resolve;
 	});
 };
-const clearFallbackFpCookie = () => {
+const clearFallbackSesCookie = () => {
 	return new Promise(res => {
-		getFpCookie().then(cookie => {
-			if (cookie.value === fallbackFp){
+		getSesCookie().then(cookie => {
+			if (cookie.value === fallbackSes){
 				const removeObject = {
-					name: fpCookieName,
+					name: sesCookieName,
 					url: cookieUrl,
 				};
 				if (isFirefox)
@@ -64,6 +64,7 @@ function interact(endpoint, value) {
 					"class": "Image",
 					"id": Cache.getImageData().id,
 					"value": value,
+					"_method": type,
 				}),
 				processData: false,
 				success: data => {
@@ -72,7 +73,7 @@ function interact(endpoint, value) {
 						upvotes: data.upvotes,
 						downvotes: data.downvotes,
 					});
-					clearFallbackFpCookie().then(res);
+					clearFallbackSesCookie().then(res);
 				},
 				error: resp => {
 					// Already voted
@@ -83,18 +84,18 @@ function interact(endpoint, value) {
 
 					alert('Failed to vote');
 					console.info(resp);
-					clearFallbackFpCookie().then(() => rej(resp));
+					clearFallbackSesCookie().then(() => rej(resp));
 				},
 			});
 		}).catch(rej);
 	};
 
-	getFpCookie().then(existingCookie => {
+	getSesCookie().then(existingCookie => {
 		const setObject = {
 			domain: Settings.getDomain(),
-			name: fpCookieName,
+			name: sesCookieName,
 			path: '/',
-			value: fallbackFp,
+			value: fallbackSes,
 			url: cookieUrl,
 		};
 		if (existingCookie === null){
@@ -112,8 +113,7 @@ function interact(endpoint, value) {
 }
 
 function requestCookiePermission() {
-	const permissions = ['cookies'];
-	return checkPermissions(permissions).catch(() => requestPermissions(permissions));
+	return requestPermissions(['cookies']);
 }
 
 export function fave(way) {
