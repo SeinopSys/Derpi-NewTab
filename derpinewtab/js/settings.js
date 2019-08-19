@@ -1,15 +1,20 @@
 import setHelper from './set-helper.js';
 import { checkDomainPermissions } from './perms.js';
+import { isFirefox } from './firefox-detector.js';
 
 const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
 
 const LS_KEY = 'settings';
 export const RATING_TAGS = new Set(['safe', 'suggestive', 'questionable', 'explicit', 'semi-grimdark', 'grimdark', 'grotesque']);
+export const AVAILABLE_THEMES = new Set(['light', 'dark', 'red']);
 export const DEFAULT_DOMAIN = 'derpibooru.org';
 export const DOMAINS = new Set([DEFAULT_DOMAIN, 'www.derpibooru.org', 'trixiebooru.org']);
 export const RESOLUTION_CAP = [4096, 4096]; // w, h
-export const SEARCH_SETTINGS_KEYS = [
+export const METABAR_DISAPPEAR_TIMEOUT = 1000;
+export const METABAR_OPAQUE_CLASS = 'mouse-stopped';
+export const SIDEBAR_OPEN_CLASS = 'sidebar-open';
+export const SEARCH_SETTINGS_KEYS =  [
 	'tags',
 	'andtags',
 	'exclude',
@@ -17,17 +22,25 @@ export const SEARCH_SETTINGS_KEYS = [
 	'hd',
 	'rescap',
 	'domain',
+	'filterId',
 ];
-export const METADATA_SETTINGS_KEYS = [
-	'showId',
-	'showUploader',
-	'showFaves',
-	'showScore',
-	'showVotes',
-	'showVoteCounts',
-	'showComments',
-	'showHide',
-];
+export const METADATA_SETTINGS_KEYS = (() => {
+	const base = [
+		'showId',
+		'showUploader',
+		'showFaves',
+		'showScore',
+		'showVotes',
+		'showVoteCounts',
+		'showComments',
+		'showHide',
+	];
+	if (!isFirefox){
+		const pointlessSettings = ['showVoteCounts', 'showHide'];
+		return base.filter(item => !pointlessSettings.includes(item));
+	}
+	return base;
+})();
 export const DEFAULT_SETTINGS = {
 	tags: ['safe'],
 	andtags: false,
@@ -35,6 +48,7 @@ export const DEFAULT_SETTINGS = {
 	eqg: false,
 	hd: true,
 	rescap: true,
+	filterId: false,
 	domain: DEFAULT_DOMAIN,
 	showId: true,
 	showUploader: true,
@@ -44,7 +58,18 @@ export const DEFAULT_SETTINGS = {
 	showVoteCounts: true,
 	showComments: true,
 	showHide: true,
+	dismissBugNotice: false,
+	theme: getDefaultTheme(),
 };
+
+// Detect system dark mode setting and use appropriate default theme
+function getDefaultTheme() {
+	const supportsPrefersColorScheme = window.matchMedia('(prefers-color-scheme)').media !== 'not all';
+	const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+	const defaultTheme = supportsPrefersColorScheme && prefersDarkMode ? 'dark' : 'light';
+	document.body.classList.add(`theme-${defaultTheme}`);
+	return defaultTheme;
+}
 
 class Settings {
 	getEQG() {
@@ -67,8 +92,20 @@ class Settings {
 		return this.searchSources.tags.value;
 	}
 
+	getFilterId() {
+		return this.searchSources.filterId.value;
+	}
+
 	getSearchLink() {
 		return this.searchLinkSource.value;
+	}
+
+	getDismissBugNotice() {
+		return this.dismissBugNoticeSource.value;
+	}
+
+	getTheme() {
+		return this.themeSource.value;
 	}
 
 	getMetaByKey(key) {
@@ -90,11 +127,15 @@ class Settings {
 
 		this.searchLinkSource = new BehaviorSubject(this._generateSearchLink());
 		this.searchLink = this.searchLinkSource.asObservable().pipe(distinctUntilChanged());
+
+		this.dismissBugNoticeSource = new BehaviorSubject(DEFAULT_SETTINGS.dismissBugNotice);
+		this.themeSource = new BehaviorSubject(DEFAULT_SETTINGS.theme);
+		this.theme = this.themeSource.asObservable().pipe(distinctUntilChanged());
 	}
 
 	/** @private */
 	_getTagsQuery() {
-		const allowedQuery = new Set(this.searchSources.tags.value);
+		const allowedQuery = new Set(this.getTags());
 		const finalQuery = [
 			Array.from(allowedQuery).join(this.searchSources.andtags.value !== true ? ' OR ' : ' AND ')
 		];
@@ -111,16 +152,24 @@ class Settings {
 	}
 
 	/** @private */
+	_getFilterIdQuery() {
+		const filterId = this.getFilterId();
+		return typeof filterId === 'number' ? `&filter_id=${filterId}` : '';
+	}
+
+	/** @private */
 	_generateSearchLink() {
-		let size = (this.searchSources.hd.value ? ['width.gte:1280', 'height.gte:720'] : []);
-		if (this.searchSources.rescap.value === true)
+		let size = (this.getHD() ? ['width.gte:1280', 'height.gte:720'] : []);
+		if (this.getResCap().value === true)
 			size = size.concat([`width.lte:${RESOLUTION_CAP[0]}`, `height.lte:${RESOLUTION_CAP[1]}`]);
 		let query = ['wallpaper', this._getTagsQuery()];
-		if (this.searchSources.eqg.value !== true)
+		if (this.getEQG().value !== true)
 			query.push('-equestria girls');
 		if (size.length > 0)
 			query = query.concat(size);
-		return `https://${this.searchSources.domain.value}/search.json?perpage=5&q=${encodeURIComponent(query.join(' AND ')).replace(/%20/g, '+')}`;
+		const q = encodeURIComponent(query.join(' AND ')).replace(/%20/g, '+');
+		const filter = this._getFilterIdQuery();
+		return `https://${this.getDomain()}/search.json?perpage=5&q=${q}${filter}`;
 	}
 
 	async init() {
@@ -135,40 +184,7 @@ class Settings {
 		const newSettings = {};
 
 		if (localStorage.length > 0){
-			localStorage.removeItem('image_hash');
-			localStorage.removeItem('image_search');
-			localStorage.removeItem('setting_castVotes');
-
-			const oldKeys = {
-				'setting_allowed_tags': 'tags',
-				'setting_domain': 'domain',
-				'setting_metadata': null,
-			};
-
-			Object.keys(oldKeys).forEach(oldKey => {
-				const item = localStorage.getItem(oldKey);
-				if (item === null)
-					return;
-				localStorage.removeItem(oldKey);
-
-				const newKey = oldKeys[oldKey];
-				switch (oldKey){
-					case 'setting_allowed_tags':
-						newSettings[newKey] = item.split(',');
-						break;
-					case 'setting_metadata':{
-						newSettings.metadata = {};
-						const enabled = item.replace(/show/g, '').split(',');
-						['uploader', 'score', 'votes', 'comments', 'faves'].forEach(key => {
-							if (enabled.indexOf(key) === -1)
-								newSettings['show' + (key[0].toUpperCase()) + key.substring(1)] = false;
-						});
-					}
-						break;
-					default:
-						newSettings[newKey] = item;
-				}
-			});
+			localStorage.removeItem('firstrun');
 		}
 
 		this.setSettings($.extend(true, DEFAULT_SETTINGS, newSettings), false);
@@ -186,6 +202,8 @@ class Settings {
 			METADATA_SETTINGS_KEYS.forEach(key => {
 				this.metaSources[key].next(this._settings[key]);
 			});
+			this.dismissBugNoticeSource.next(this._settings.dismissBugNotice);
+			this.themeSource.next(this._settings.theme);
 		}
 		else {
 			this._tmpSettings = obj;
@@ -206,7 +224,11 @@ class Settings {
 						target.tags = undefined;
 					break;
 				case 'domain':
-					if (DOMAINS.has(value)){
+					if (!isFirefox){
+						target.domain = DEFAULT_DOMAIN;
+						res();
+					}
+					else if (DOMAINS.has(value)){
 						checkDomainPermissions(value)
 							.then(() => {
 								target.domain = value;
@@ -218,6 +240,26 @@ class Settings {
 							});
 					}
 					return;
+				case 'dismissBugNotice':
+					target[name] = Boolean(value);
+					break;
+				case 'filterId':
+					if (value !== null && (typeof value !== 'number' || isNaN(value) || !isFinite(value) || value < 1)){
+						if (strict){
+							rej();
+							return;
+						}
+
+						target[name] = null;
+						res();
+						return;
+					}
+					target[name] = value;
+					break;
+				case 'theme':
+					if (AVAILABLE_THEMES.has(value))
+						target[name] = value;
+					break;
 				default:
 					if (SEARCH_SETTINGS_KEYS.includes(name) || METADATA_SETTINGS_KEYS.includes(name))
 						target[name] = Boolean(value);
@@ -251,7 +293,7 @@ class Settings {
 		const tempSettings = this._tmpSettings;
 		const verifiedSettings = {};
 
-		for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS))
+		for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS, ['dismissBugNotice', 'theme']))
 			await this._setSetting(key, tempSettings, verifiedSettings);
 
 		this.setSettings(verifiedSettings);

@@ -3,7 +3,11 @@ import Settings, {
 	RATING_TAGS,
 	RESOLUTION_CAP,
 	SEARCH_SETTINGS_KEYS,
-	METADATA_SETTINGS_KEYS
+	METADATA_SETTINGS_KEYS,
+	AVAILABLE_THEMES,
+	METABAR_DISAPPEAR_TIMEOUT,
+	METABAR_OPAQUE_CLASS,
+	SIDEBAR_OPEN_CLASS,
 } from './settings.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
@@ -14,8 +18,11 @@ import { vote, fave, hide } from './interactions.js';
 import Connectivity from './connectivity.js';
 import setHelper from './set-helper.js';
 
+const { fromEvent } = rxjs;
+const { map, throttleTime } = rxjs.operators;
+
 const SEARCH_SETTINGS_CHECKBOX_KEYS = (() => {
-	const SEARCH_SETTINGS_NON_CHECKBOX_KEYS = new Set(['tags','domain']);
+	const SEARCH_SETTINGS_NON_CHECKBOX_KEYS = new Set(['tags', 'domain', 'filterId']);
 
 	return Array.from(
 		setHelper.difference(new Set(SEARCH_SETTINGS_KEYS), SEARCH_SETTINGS_NON_CHECKBOX_KEYS)
@@ -32,6 +39,11 @@ export const METADATA_SETTING_NAMES = {
 	showFaves: 'Show favorite count',
 	showHide: 'Show hide button',
 };
+export const THEME_NAMES = {
+	light: 'Default',
+	dark: 'Dark',
+	red: 'Red',
+};
 
 class Extension {
 	constructor() {
@@ -40,10 +52,10 @@ class Extension {
 		this.$searchSettings = $('#search-settings');
 		this.$body = $('body');
 		this.$metaSettings = $('#metadata-settings');
+		this.$filterSettings = $('#filter-settings');
 		this.$domainSettings = $('#domain-settings');
+		this.$themeSettings = $('#theme-settings');
 		this.$ffDomainApply = $('#firefox-domain-apply');
-		this.$image = $('#image');
-		this.$imageGhost = $('#image-ghost');
 		this.$data = $('#data');
 		this.$style = $('#style');
 		this.$viewport = $('#viewport');
@@ -53,6 +65,7 @@ class Extension {
 		this.$rescapWidth = $('#rescap-width');
 		this.$rescapHeight = $('#rescap-height');
 		this.$noRatingTags = $('#no-rating-tags');
+		this.$metadataArea = $('#metadata-area');
 
 		this.$ratingTags = this.$settings.find('.rating-tags');
 		this.$domainSelect = this.$domainSettings.find('select');
@@ -63,6 +76,7 @@ class Extension {
 
 		this.updatingImage = false;
 		this.fetchController = null;
+		this.metabarTimeout = null;
 
 		this.searchSettingsRefreshCountdownInterval = undefined;
 
@@ -72,17 +86,62 @@ class Extension {
 	}
 
 	async init() {
+		await Settings.init();
+		// Try to avoid FOUC by doing this ASAP
+		this.loadTheme();
+
 		this.$version.text(' v' + chrome.runtime.getManifest().version);
 		this.$rescapWidth.text(RESOLUTION_CAP[0]);
 		this.$rescapHeight.text(RESOLUTION_CAP[1]);
 
-		await Settings.init();
 		await Cache.init();
 
+		this.processIcons();
 		this.createElements();
 		this.createSubscriptions();
 		this.attachEventHandlers();
 		this.handleFirstRun();
+	}
+
+	loadTheme() {
+		Settings.theme.subscribe(theme => {
+			setTimeout(() => {
+				if (this.$themeRadios) {
+					this.$themeRadios.prop('checked', false);
+					this.$themeRadios.filter((_, el) => el.value === theme).prop('checked', true);
+				}
+				const $root = $('html');
+				const rootClasses = $root.attr('class');
+				const newThemeClass = `theme-${theme}`;
+				if (typeof rootClasses === "string") {
+					const themeClassMatch = rootClasses.match(/theme-[a-z]+/);
+					if (themeClassMatch)
+						$root.removeClass(themeClassMatch[0]);
+				}
+				$root.addClass(newThemeClass);
+			});
+		});
+
+		// Theme settings
+		const currentTheme = Settings.getTheme();
+		AVAILABLE_THEMES.forEach(theme => {
+			this.$themeSettings.append(
+				$(document.createElement('label')).attr('class', 'switch').append(
+					$(document.createElement('input')).attr({
+						type: 'checkbox',
+						name: 'theme',
+						value: theme,
+					}).prop('checked', currentTheme === theme),
+					`<span class="button"></span>`,
+					$(document.createElement('span')).text(THEME_NAMES[theme])
+				)
+			)
+		});
+		this.$themeRadios = this.$themeSettings.find('.switch input');
+	}
+
+	processIcons() {
+		$('.fa[data-fa]').each((_, el) => el.innerHTML = fa[el.dataset.fa]);
 	}
 
 	createElements() {
@@ -110,7 +169,7 @@ class Extension {
 		METADATA_SETTINGS_KEYS.forEach(key => {
 			const settingValue = Settings.getMetaByKey(key);
 			this.$metaSettings.append(
-				$(document.createElement('label')).attr('class','switch').append(
+				$(document.createElement('label')).attr('class', 'switch').append(
 					$(document.createElement('input')).attr({
 						type: 'checkbox',
 						name: key,
@@ -140,6 +199,9 @@ class Extension {
 		SEARCH_SETTINGS_CHECKBOX_KEYS.forEach(key => {
 			Settings[key].subscribe(checked => this.searchSettingsInputs[key].prop('checked', checked));
 		});
+		Settings.filterId.pipe(
+			map(value => value === null ? '' : value)
+		).subscribe(filterId => this.$filterSettings.find('input').val(filterId));
 		this.$metaToggles.each((_, el) => {
 			const { name } = el;
 			Settings[name].subscribe(value => {
@@ -162,17 +224,35 @@ class Extension {
 
 	attachEventHandlers() {
 		this.$showSettingsButton.removeClass('disabled').on('click', () => {
-			this.$body.toggleClass('sidebar-open');
+			const hasClass = this.$body.hasClass(SIDEBAR_OPEN_CLASS);
+			if (hasClass){
+				this.$body.removeClass(SIDEBAR_OPEN_CLASS);
+				this.startMetabarTimer();
+			} else {
+				this.$body.addClass(SIDEBAR_OPEN_CLASS);
+				this.stopMetabarTimer();
+			}
 		});
 		if (isFirefox){
 			this.$ffDomainApply.on('click', this.handleDomainChange);
-			this.$domainSelect.on('change', function() {
+			this.$domainSelect.on('change', () => {
 				this.$ffDomainApply.prop('disabled', this.$domainSelect.val() === Settings.getDomain());
 			});
+
+			this.$body.addClass('interactive');
 		}
 		else {
 			this.$ffDomainApply.remove();
 			this.$domainSelect.on('change', this.handleDomainChange);
+
+			const $cbn = $('#chrome-bug-notice');
+			if (!Settings.getDismissBugNotice()){
+				$cbn.show().on('click', '.clear', () => {
+					$cbn.slideUp(() => $cbn.remove());
+					Settings.setSetting('dismissBugNotice', true);
+				});
+			}
+			else $cbn.remove();
 		}
 		this.$searchSettings.find('input').on('click', () => {
 			if (typeof this.searchSettingsRefreshCountdownInterval === "number"){
@@ -191,12 +271,19 @@ class Extension {
 			this.searchSettingsRefreshCountdownInterval = setInterval(refreshCountdown, 1000);
 			refreshCountdown();
 		});
-		this.$metaSettings.find('.switch input').on('click', e => {
+		this.$metaToggles.on('click', e => {
 			e.preventDefault();
 
 			const { name } = e.target;
 
 			Settings.toggleSetting(name);
+		});
+		this.$themeRadios.on('click', e => {
+			e.preventDefault();
+
+			const { name, value } = e.target;
+
+			Settings.setSetting(name, value);
 		});
 		this.$clearSettings.on('click', e => {
 			e.preventDefault();
@@ -207,64 +294,155 @@ class Extension {
 			localStorage.clear();
 			location.reload();
 		});
+		const $filterIdInput = this.$filterSettings.find('input');
+		const getFilterIdFromInputValue = value => value.length === 0 ? null : parseInt(value, 10);
+		$filterIdInput.on('keydown keyup change', () => {
+			const val = getFilterIdFromInputValue($filterIdInput.val());
+			$filterIdInput.next().attr('disabled', val === Settings.getFilterId());
+		}).trigger('keydown');
+		this.$filterSettings.on('submit', 'form', async (e) => {
+			e.preventDefault();
 
-		this.$data.on('click', '.upvotes', function() {
-			const $this = $(this);
-			const active = $this.hasClass('active');
-			vote(active ? 'false' : 'up').then(() => {
-				$this.classIf(!active, 'active');
-				const down = active ? undefined : false;
-				Cache.setInteractions({ up: !active, down });
-			});
+			const filterIdString = $filterIdInput.val();
+			const filterId = getFilterIdFromInputValue(filterIdString);
+			const $errorBlock = this.$filterSettings.find('.error-block').stop();
+			try {
+				await Settings.setSetting('filterId', filterId);
+			} catch (e){
+				$errorBlock.slideDown();
+				$filterIdInput.focus();
+				return;
+			}
+
+			$errorBlock.slideUp();
+			this.hideImages();
+			this.updateImage();
 		});
-		this.$data.on('click', '.downvotes', function() {
-			const $this = $(this);
-			const active = $this.hasClass('active');
-			vote(active ? 'false' : 'down').then(() => {
-				$this.classIf(!active, 'active');
-				const up = active ? void 0 : false;
-				Cache.setInteractions({ down: !active, up });
+		this.$metadataArea.on('mouseenter', () => this.stopMetabarTimer());
+		this.$metadataArea.on('mouseleave', () => this.startMetabarTimer());
+
+		if (isFirefox){
+			this.$data.on('click', '.upvotes', function() {
+				const $this = $(this);
+				const active = $this.hasClass('active');
+				vote(active ? 'false' : 'up').then(() => {
+					$this.classIf(!active, 'active');
+					const down = active ? undefined : false;
+					Cache.setInteractions({ up: !active, down });
+				});
 			});
-		});
-		this.$data.on('click', '.faves', function() {
-			const $this = $(this);
-			const active = $this.hasClass('active');
-			fave(active ? 'false' : 'true').then(() => {
-				$this.classIf(!active, 'active');
-				const up = !active ? true : undefined;
-				const down = !active ? false : undefined;
-				Cache.setInteractions({ fave: !active, up, down });
+			this.$data.on('click', '.downvotes', function() {
+				const $this = $(this);
+				const active = $this.hasClass('active');
+				vote(active ? 'false' : 'down').then(() => {
+					$this.classIf(!active, 'active');
+					const up = active ? void 0 : false;
+					Cache.setInteractions({ down: !active, up });
+				});
 			});
-		});
-		this.$data.on('click', '.hide', function() {
-			const $this = $(this);
-			const active = $this.hasClass('active');
-			hide(active ? 'false' : 'true').then(() => {
-				$this.classIf(!active, 'active');
-				Cache.setInteractions({ hide: !active });
+			this.$data.on('click', '.faves', function() {
+				const $this = $(this);
+				const active = $this.hasClass('active');
+				fave(active ? 'false' : 'true').then(() => {
+					$this.classIf(!active, 'active');
+					const up = !active ? true : undefined;
+					const down = !active ? false : undefined;
+					Cache.setInteractions({ fave: !active, up, down });
+				});
 			});
-		});
+			this.$data.on('click', '.hide', function() {
+				const $this = $(this);
+				const active = $this.hasClass('active');
+				hide(active ? 'false' : 'true').then(() => {
+					$this.classIf(!active, 'active');
+					Cache.setInteractions({ hide: !active });
+				});
+			});
+		}
 	}
 
 	handleFirstRun() {
-		if (localStorage.getItem('firstrun'))
+		if (localStorage.getItem('oobe_modal')){
+			if (document.readyState === "complete")
+				this.attachMetabarTimerHandler();
+			else fromEvent(window, 'load').subscribe(() => this.attachMetabarTimerHandler());
 			return;
+		}
 
-		$(document.createElement('div'))
-			.attr('id', 'dialog')
-			.html('<div id="dialog-inner"><h1>Welcome to Derpi-New Tab</h1><p>To access the settings click the menu icon in the bottom left.<br><span class="faded">(this message is only displayed once)</span></p></div>')
-			.children()
-			.append($(document.createElement('button')).text('Got it').on('click', function(e) {
-				e.preventDefault();
+		const $dialog = $('#dialog');
+		const $dialogCompanion = $('#dialog-companion');
+		const $dialogContinue = $dialog.find('.continue');
+		const $dialogButtons = $dialog.find('button');
+		const $nextButton = $dialogButtons.filter('.next');
+		const $closeButton = $dialogButtons.filter('.close');
+		const $themeList = $('#theme-list');
 
-				localStorage.setItem('firstrun', '1');
-				let $dialog = $('#dialog').addClass('gtfo');
-				setTimeout(function() {
-					$dialog.remove();
-				}, 550);
-			}))
-			.end()
-			.prependTo(this.$body);
+		$nextButton.on('click', e => {
+			e.preventDefault();
+
+			$nextButton.hide();
+			if ($dialogContinue.is(':hidden:not(:animated)')){
+				$dialogContinue.slideDown();
+				$dialogCompanion.removeClass('hidden');
+				$dialog.addClass('continued');
+			}
+		});
+		AVAILABLE_THEMES.forEach(theme => {
+			$themeList.append(
+				$(document.createElement('li')).attr('data-theme', theme).html(
+					`<span class="fa">${fa.palette}</span><span>${THEME_NAMES[theme]}</span>`
+				).on('click', async e => {
+					const $li = $(e.target).closest('li');
+					await Settings.setSetting('theme', $li.attr('data-theme'));
+				})
+			);
+		});
+		this.stopMetabarTimer();
+		$dialog.removeClass('hidden');
+		$dialog.find('.to-menu').on('click', () =>
+			this.$showSettingsButton.trigger('click')
+		);
+		$closeButton.on('click', e => {
+			e.preventDefault();
+
+			localStorage.setItem('oobe_modal', 'shown');
+			$dialog.addClass('gtfo');
+			this.attachMetabarTimerHandler();
+			setTimeout(() => {
+				$dialog.remove();
+			}, 550);
+		});
+	}
+
+	attachMetabarTimerHandler(){
+		const handler = (restart = true, initial = false) => {
+			this.stopMetabarTimer();
+			if (restart)
+				this.startMetabarTimer(initial);
+		};
+		fromEvent(document, 'mousemove').pipe(
+			throttleTime(200),
+			map(() => {
+				const bodyHasClass = this.$body.hasClass(SIDEBAR_OPEN_CLASS);
+				const barHover = this.$metadataArea.is(':hover');
+				return !(bodyHasClass || barHover);
+			}),
+		).subscribe(restart => handler(restart));
+		handler(true, true);
+	}
+
+	startMetabarTimer(initial = false){
+	    this.metabarTimeout = setTimeout(() => {
+	        this.$metadataArea.addClass(METABAR_OPAQUE_CLASS).css('bottom', `-${this.$metadataArea.outerHeight()}px`);
+	    }, METABAR_DISAPPEAR_TIMEOUT * (initial ? 2 : 1));
+	}
+
+	stopMetabarTimer(){
+		if (this.metabarTimeout !== null) {
+	        clearTimeout(this.metabarTimeout);
+	        this.metabarTimeout = null;
+		}
+	    this.$metadataArea.removeClass(METABAR_OPAQUE_CLASS).css('bottom', '0px');
 	}
 
 	handleDomainChange() {
@@ -391,7 +569,7 @@ class Extension {
 				$el.attr('data-href', $el.attr('href'));
 			$el.attr('href', $el.attr('data-href').replace('domain.tld', domain));
 		});
-		$('.contents-domain').html(domain.replace('derpi','der&shy;pi&shy;').replace('trixie','trix&shy;ie&shy;'));
+		$('.contents-domain').html(domain.replace('derpi', 'der&shy;pi&shy;').replace('trixie', 'trix&shy;ie&shy;'));
 	}
 
 	displayImageData(imageData = Cache.getImageData()) {
@@ -419,14 +597,14 @@ class Extension {
 		if (!$metadataList.length){
 			this.$data.append(
 				`<p id="metadata-list">
-					<span class="id">${fa.hashtag}<span>${imageData.id}</span></span>
-					<span class="uploader">${fa.upload}<span>${imageData.uploader.replace(/</g, '&lt;')}</span></span>
-					<a class="faves${interactions.fave ? ' active' : ''}">${fa.star}<span>${imageData.faves}</span></a>
-					<a class="upvotes votes${interactions.up ? ' active' : ''}">${fa.arrowUp}<span class="votecounts">${imageData.upvotes}</span></a>
+					<span class="id"><span class="fa">${fa.hashtag}</span><span>${imageData.id}</span></span>
+					<span class="uploader"><span class="fa">${fa.upload}</span><span>${imageData.uploader.replace(/</g, '&lt;')}</span></span>
+					<a class="faves${interactions.fave ? ' active' : ''}"><span class="fa">${fa.star}</span><span>${imageData.faves}</span></a>
+					<a class="upvotes votes${interactions.up ? ' active' : ''}"><span class="fa">${fa.arrowUp}</span><span class="votecounts">${imageData.upvotes}</span></a>
 					<span class="score"><span>${score}</span></span>
-					<a class="downvotes votes${interactions.down ? ' active' : ''}">${fa.arrowDown}<span class="votecounts">${imageData.downvotes}</span></a>
-					<a class="comments" id="view-comments">${fa.comments}<span>${imageData.comment_count}</span></a>
-					<a class="hide">${fa.eyeSlash}</a>
+					<a class="downvotes votes${interactions.down ? ' active' : ''}"><span class="fa">${fa.arrowDown}</span><span class="votecounts">${imageData.downvotes}</span></a>
+					<a class="comments" id="view-comments"><span class="fa">${fa.comments}</span><span>${imageData.comment_count}</span></a>
+					<a class="hide"><span class="fa">${fa.eyeSlash}</span></a>
 				</p>`
 			);
 		}

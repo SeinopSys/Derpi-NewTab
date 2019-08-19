@@ -1,22 +1,21 @@
 const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
 
-const onlineSource = new BehaviorSubject(navigator.onLine);
-
 class Connectivity {
 	constructor() {
-		this.online = onlineSource.asObservable().pipe(distinctUntilChanged());
+		this.onlineSource = new BehaviorSubject(navigator.onLine);
+		this.online = this.onlineSource.asObservable().pipe(distinctUntilChanged());
 
 		window.addEventListener('online', () => {
-			onlineSource.next(true);
+			this.onlineSource.next(true);
 		});
 		window.addEventListener('offline', () => {
-			onlineSource.next(false);
+			this.onlineSource.next(false);
 		});
 	}
 
 	isOnline(){
-		return onlineSource.value;
+		return this.onlineSource.value;
 	}
 }
 

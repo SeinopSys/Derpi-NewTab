@@ -1,4 +1,5 @@
 import Settings from './settings.js';
+import { isFirefox } from "./firefox-detector.js";
 
 const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
@@ -15,13 +16,12 @@ const DEFAULT_DATA = {
 	},
 };
 
-const imageDataSource = new BehaviorSubject(DEFAULT_DATA.imageData);
-const interactionsSource = new BehaviorSubject(DEFAULT_DATA.interactions);
-
 class LocalCache {
 	constructor() {
-		this.imageData = imageDataSource.asObservable().pipe(distinctUntilChanged());
-		this.interactions = interactionsSource.asObservable().pipe(distinctUntilChanged());
+		this.imageDataSource = new BehaviorSubject(DEFAULT_DATA.imageData);
+		this.interactionsSource = new BehaviorSubject(DEFAULT_DATA.interactions);
+		this.imageData = this.imageDataSource.asObservable().pipe(distinctUntilChanged());
+		this.interactions = this.interactionsSource.asObservable().pipe(distinctUntilChanged());
 	}
 
 	async init() {
@@ -33,23 +33,23 @@ class LocalCache {
 	}
 
 	getImageData() {
-		return imageDataSource.value;
+		return this.imageDataSource.value;
 	}
 
 	getInteractions() {
-		return interactionsSource.value;
+		return this.interactionsSource.value;
 	}
 
 	setInteractions(newInteractions = null, save = true) {
-		this._cache.interactions = $.extend({}, interactionsSource.value, newInteractions);
-		interactionsSource.next(this._cache.interactions);
+		this._cache.interactions = $.extend({}, this.interactionsSource.value, newInteractions);
+		this.interactionsSource.next(this._cache.interactions);
 		if (save)
 			this.save();
 	}
 
 	setImageData(newImageData, save = true) {
-		this._cache.imageData = $.extend({}, imageDataSource.value, newImageData);
-		imageDataSource.next(this._cache.imageData);
+		this._cache.imageData = $.extend({}, this.imageDataSource.value, newImageData);
+		this.imageDataSource.next(this._cache.imageData);
 		if (save){
 			this.save();
 			this.updateInteractions();
@@ -62,7 +62,7 @@ class LocalCache {
 
 	updateInteractions() {
 		return new Promise(res => {
-			const imageData = imageDataSource.value;
+			const imageData = this.imageDataSource.value;
 			if (!imageData.id){
 				res();
 				return;
@@ -99,35 +99,37 @@ class LocalCache {
 					});
 					this.save();
 
-					const interactionData = $el.find('.js-datastore').attr('data-interactions');
-					let interactions;
-					try {
-						interactions = JSON.parse(interactionData);
-					}
-					catch (e){
-						console.error('Interaction data could not be updated, invalid response from server:', interactionData);
-						res(false);
-						return;
-					}
 					const votes = {
 						up: false,
 						down: false,
 						fave: false,
 						hide: false,
 					};
-					interactions.forEach(interact => {
-						switch (interact.interaction_type){
-							case "voted":
-								votes[interact.value] = true;
-								break;
-							case "faved":
-								votes.fave = true;
-								break;
-							case "hidden":
-								votes.hide = true;
-								break;
+					if (isFirefox) {
+						const interactionData = $el.find('.js-datastore').attr('data-interactions');
+						let interactions;
+						try {
+							interactions = JSON.parse(interactionData);
 						}
-					});
+						catch (e){
+							console.error('Interaction data could not be updated, invalid response from server:', interactionData);
+							res(false);
+							return;
+						}
+						interactions.forEach(interact => {
+							switch (interact.interaction_type){
+								case "voted":
+									votes[interact.value] = true;
+									break;
+								case "faved":
+									votes.fave = true;
+									break;
+								case "hidden":
+									votes.hide = true;
+									break;
+							}
+						});
+					}
 					this.setInteractions(votes);
 					res(true);
 				});
@@ -135,11 +137,9 @@ class LocalCache {
 	}
 
 	updateImageData(signal) {
+		const credentials = isFirefox ? 'include' : undefined;
 		return new Promise((res, rej) => {
-			fetch(
-				Settings.getSearchLink(),
-				{ credentials: 'include', signal }
-			).then(request => {
+			fetch(Settings.getSearchLink(), { credentials, signal }).then(request => {
 				request.json().then(data => {
 					const { search } = data;
 
