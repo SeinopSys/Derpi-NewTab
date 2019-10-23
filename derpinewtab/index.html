@@ -38,7 +38,7 @@
 			<strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
 		</div>
 		<div id="chrome-bug-notice" class="block warning-block">
-			<p>Due to a <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=617198" target="_blank" rel="noopener">Chrome bug</a> it's impossible to make authenticated requests to websites that use an otherwise great <a href="https://www.netsparker.com/blog/web-security/same-site-cookie-attribute-prevent-cross-site-request-forgery/" target="_blank" rel="noopener">security feature</a> from extension pages. Derpibooru happens to make use of this feature which means that respecting your currently selected filter and using the voting buttons is not possible. A filter ID input has been added to solve the filtering issue, and the voting buttons are no longer clickable. This does not affect <a href="https://getfirefox.com" target="_blank" rel="noopener">Firefox</a> users.
+			<p>Due to a combination of a <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1017300" target="_blank" rel="noopener">Chrome bug</a> and Derpibooru's <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery" target="_blank" rel="noopener">CSRF protection</a> method it's currently not possible to use the voting buttons. This does not affect <a href="https://getfirefox.com" target="_blank" rel="noopener">Firefox</a> users.
 			<span class="clear"></span>
 		</div>
 		<section id="filter-settings">
@@ -46,8 +46,7 @@
 				<span class="fa setting-icon" data-fa="filter"></span>
 				Filtering
 			</h2>
-			<p class="if-interactive">Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a> (the <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> filter is used if you aren't logged in). You may also choose to specify a filter ID, but be aware that if you are logged in on <span class="contents-domain"></span> your currently selected filter will override this setting.</p>
-			<p class="unless-interactive">Enter a filter ID below to use that filter when searching for images to display. The ID is typically found at the end of the URL you see when you view or edit the filter. If left blank, the <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> filter is used.</p>
+			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a> (the <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> filter is used if you aren't logged in). You may also choose to specify a filter ID, but be aware that if you are logged in on <span class="contents-domain"></span> your currently selected filter will override this setting.</p>
 			<form>
 				<input type="number" step="1" class="input input--block input--no-spin" placeholder="Paste filter ID here">
 				<button class="button input--block">Apply</button>

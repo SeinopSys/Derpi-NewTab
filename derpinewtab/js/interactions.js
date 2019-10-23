@@ -7,11 +7,11 @@ import { requestPermissions } from './perms.js';
 const sesCookieName = '_ses';
 const cookieUrl = `https://${Settings.getDomain()}/`;
 const fallbackSes = 'bburu8b1123';
-const getSesCookie = () => {
+const getCookieByName = name => {
 	let res;
 
 	const getObject = {
-		name: sesCookieName,
+		name,
 		url: cookieUrl,
 	};
 	const handleCookie = existingCookie => {
@@ -25,6 +25,7 @@ const getSesCookie = () => {
 		res = resolve;
 	});
 };
+const getSesCookie = () => getCookieByName(sesCookieName);
 const clearFallbackSesCookie = () => {
 	return new Promise(res => {
 		getSesCookie().then(cookie => {
@@ -62,7 +63,7 @@ function interact(endpoint, value) {
 				contentType: 'application/json',
 				data: JSON.stringify({
 					"class": "Image",
-					"id": Cache.getImageData().id,
+					"id": String(Cache.getImageData().id),
 					"value": value,
 					"_method": type,
 				}),

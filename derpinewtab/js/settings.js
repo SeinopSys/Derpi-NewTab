@@ -58,7 +58,7 @@ export const DEFAULT_SETTINGS = {
 	showVoteCounts: true,
 	showComments: true,
 	showHide: true,
-	dismissBugNotice: false,
+	dismissBugNotice2: false,
 	theme: getDefaultTheme(),
 };
 
@@ -128,7 +128,7 @@ class Settings {
 		this.searchLinkSource = new BehaviorSubject(this._generateSearchLink());
 		this.searchLink = this.searchLinkSource.asObservable().pipe(distinctUntilChanged());
 
-		this.dismissBugNoticeSource = new BehaviorSubject(DEFAULT_SETTINGS.dismissBugNotice);
+		this.dismissBugNoticeSource = new BehaviorSubject(DEFAULT_SETTINGS.dismissBugNotice2);
 		this.themeSource = new BehaviorSubject(DEFAULT_SETTINGS.theme);
 		this.theme = this.themeSource.asObservable().pipe(distinctUntilChanged());
 	}
@@ -202,7 +202,7 @@ class Settings {
 			METADATA_SETTINGS_KEYS.forEach(key => {
 				this.metaSources[key].next(this._settings[key]);
 			});
-			this.dismissBugNoticeSource.next(this._settings.dismissBugNotice);
+			this.dismissBugNoticeSource.next(this._settings.dismissBugNotice2);
 			this.themeSource.next(this._settings.theme);
 		}
 		else {
@@ -240,7 +240,7 @@ class Settings {
 							});
 					}
 					return;
-				case 'dismissBugNotice':
+				case 'dismissBugNotice2':
 					target[name] = Boolean(value);
 					break;
 				case 'filterId':
@@ -293,7 +293,7 @@ class Settings {
 		const tempSettings = this._tmpSettings;
 		const verifiedSettings = {};
 
-		for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS, ['dismissBugNotice', 'theme']))
+		for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS, ['dismissBugNotice2', 'theme']))
 			await this._setSetting(key, tempSettings, verifiedSettings);
 
 		this.setSettings(verifiedSettings);

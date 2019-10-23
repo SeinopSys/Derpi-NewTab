@@ -249,7 +249,7 @@ class Extension {
 			if (!Settings.getDismissBugNotice()){
 				$cbn.show().on('click', '.clear', () => {
 					$cbn.slideUp(() => $cbn.remove());
-					Settings.setSetting('dismissBugNotice', true);
+					Settings.setSetting('dismissBugNotice2', true);
 				});
 			}
 			else $cbn.remove();
