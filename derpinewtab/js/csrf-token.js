@@ -1,11 +1,12 @@
-import Settings from './settings.js';
-
 const isSignedIn = html => /<\/head><body data-signed-in="true"/.test(html);
+
 let tokenCache = {};
+
 const useCacheForMethods = {
 	PUT: true,
 	GET: false,
 };
+
 export default {
 	get(requestMethod) {
 		if (tokenCache.token && useCacheForMethods[requestMethod] === true)

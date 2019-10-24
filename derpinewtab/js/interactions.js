@@ -6,7 +6,7 @@ import { requestPermissions } from './perms.js';
 
 const sesCookieName = '_ses';
 const cookieUrl = `https://${Settings.getDomain()}/`;
-const fallbackSes = 'bburu8b1123';
+const fallbackSes = 'c1836832948';
 const getCookieByName = name => {
 	let res;
 
@@ -93,7 +93,7 @@ function interact(endpoint, value) {
 
 	getSesCookie().then(existingCookie => {
 		const setObject = {
-			domain: Settings.getDomain(),
+			domain: `.${Settings.getDomain()}`,
 			name: sesCookieName,
 			path: '/',
 			value: fallbackSes,
