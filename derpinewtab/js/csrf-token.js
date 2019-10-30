@@ -1,3 +1,5 @@
+import Settings from './settings.js';
+
 const isSignedIn = html => /<\/head><body data-signed-in="true"/.test(html);
 
 let tokenCache = {};
