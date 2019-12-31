@@ -4,7 +4,7 @@ import { isFirefox } from "./firefox-detector.js";
 const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
 
-const LS_KEY = 'cache';
+const LS_KEY = 'cache_v1';
 
 const DEFAULT_DATA = {
 	imageData: {},
@@ -141,7 +141,7 @@ class LocalCache {
 		return new Promise((res, rej) => {
 			fetch(Settings.getSearchLink(), { credentials, signal }).then(request => {
 				request.json().then(data => {
-					const { search } = data;
+					const search = data.images;
 
 					if (search.length === 0){
 						const msgs = ['Search returned no results.'];
@@ -153,7 +153,7 @@ class LocalCache {
 
 					let image;
 					for (let result of search){
-						if (!result.is_rendered)
+						if (!result.processed)
 							continue;
 
 						image = result;
@@ -164,9 +164,6 @@ class LocalCache {
 						rej(['No rendered image found','Try reloading in a minute or so']);
 						return;
 					}
-
-					if (/^\/\//.test(image.image))
-						image.image = 'https:' + image.image;
 
 					res(image);
 				}).catch(rej);

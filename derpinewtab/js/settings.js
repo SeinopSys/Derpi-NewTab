@@ -169,7 +169,7 @@ class Settings {
 			query = query.concat(size);
 		const q = encodeURIComponent(query.join(' AND ')).replace(/%20/g, '+');
 		const filter = this._getFilterIdQuery();
-		return `https://${this.getDomain()}/search.json?perpage=5&q=${q}${filter}`;
+		return `https://${this.getDomain()}/api/v1/json/search/images?per_page=5&q=${q}${filter}`;
 	}
 
 	async init() {

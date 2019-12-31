@@ -1,12 +1,12 @@
 import Settings, {
+	AVAILABLE_THEMES,
 	DOMAINS,
+	METABAR_DISAPPEAR_TIMEOUT,
+	METABAR_OPAQUE_CLASS,
+	METADATA_SETTINGS_KEYS,
 	RATING_TAGS,
 	RESOLUTION_CAP,
 	SEARCH_SETTINGS_KEYS,
-	METADATA_SETTINGS_KEYS,
-	AVAILABLE_THEMES,
-	METABAR_DISAPPEAR_TIMEOUT,
-	METABAR_OPAQUE_CLASS,
 	SIDEBAR_OPEN_CLASS,
 } from './settings.js';
 import csrfToken from './csrf-token.js';
@@ -14,7 +14,7 @@ import Cache from './local-cache.js';
 import { isFirefox } from './firefox-detector.js';
 import { requestDomainPermission } from './perms.js';
 import fa from './fa.js';
-import { vote, fave, hide } from './interactions.js';
+import { fave, hide, vote } from './interactions.js';
 import Connectivity from './connectivity.js';
 import setHelper from './set-helper.js';
 
@@ -106,14 +106,14 @@ class Extension {
 	loadTheme() {
 		Settings.theme.subscribe(theme => {
 			setTimeout(() => {
-				if (this.$themeRadios) {
+				if (this.$themeRadios){
 					this.$themeRadios.prop('checked', false);
 					this.$themeRadios.filter((_, el) => el.value === theme).prop('checked', true);
 				}
 				const $root = $('html');
 				const rootClasses = $root.attr('class');
 				const newThemeClass = `theme-${theme}`;
-				if (typeof rootClasses === "string") {
+				if (typeof rootClasses === "string"){
 					const themeClassMatch = rootClasses.match(/theme-[a-z]+/);
 					if (themeClassMatch)
 						$root.removeClass(themeClassMatch[0]);
@@ -187,7 +187,7 @@ class Extension {
 		Cache.imageData.subscribe(imageData => this.displayImageData(imageData));
 
 		Settings.searchLink.subscribe(link => {
-			this.$searchLink.attr('href', link.replace('.json?perpage=5&', '?'));
+			this.$searchLink.attr('href', link.replace('/api/v1/json/search/images?per_page=5&', '/search?'));
 			this.updateImage();
 		});
 		Settings.domain.subscribe(domain => {
@@ -228,7 +228,8 @@ class Extension {
 			if (hasClass){
 				this.$body.removeClass(SIDEBAR_OPEN_CLASS);
 				this.startMetabarTimer();
-			} else {
+			}
+			else {
 				this.$body.addClass(SIDEBAR_OPEN_CLASS);
 				this.stopMetabarTimer();
 			}
@@ -414,7 +415,7 @@ class Extension {
 		});
 	}
 
-	attachMetabarTimerHandler(){
+	attachMetabarTimerHandler() {
 		const handler = (restart = true, initial = false) => {
 			this.stopMetabarTimer();
 			if (restart)
@@ -431,18 +432,18 @@ class Extension {
 		handler(true, true);
 	}
 
-	startMetabarTimer(initial = false){
-	    this.metabarTimeout = setTimeout(() => {
-	        this.$metadataArea.addClass(METABAR_OPAQUE_CLASS).css('bottom', `-${this.$metadataArea.outerHeight()}px`);
-	    }, METABAR_DISAPPEAR_TIMEOUT * (initial ? 2 : 1));
+	startMetabarTimer(initial = false) {
+		this.metabarTimeout = setTimeout(() => {
+			this.$metadataArea.addClass(METABAR_OPAQUE_CLASS).css('bottom', `-${this.$metadataArea.outerHeight()}px`);
+		}, METABAR_DISAPPEAR_TIMEOUT * (initial ? 2 : 1));
 	}
 
-	stopMetabarTimer(){
-		if (this.metabarTimeout !== null) {
-	        clearTimeout(this.metabarTimeout);
-	        this.metabarTimeout = null;
+	stopMetabarTimer() {
+		if (this.metabarTimeout !== null){
+			clearTimeout(this.metabarTimeout);
+			this.metabarTimeout = null;
 		}
-	    this.$metadataArea.removeClass(METABAR_OPAQUE_CLASS).css('bottom', '0px');
+		this.$metadataArea.removeClass(METABAR_OPAQUE_CLASS).css('bottom', '0px');
 	}
 
 	handleDomainChange() {
@@ -485,10 +486,14 @@ class Extension {
 			this.updatingImage = false;
 			this.$body.removeClass('loading');
 		};
-		const err = () => {
+		const err = error => {
 			if (!cachedImageData.id)
 				this.$data.html('<h1>There was an error while fetching the image data</h1><p>' + (isOffline ? 'You are not connected to the Internet.' : 'Derpibooru may be down for maintenance, try again later.') + '</p>');
-			else console.error('There was an error while searching for new images, keeping last cached state silently');
+			else {
+				if (error)
+					console.error(error);
+				console.error('There was an error while searching for new images, keeping last cached state silently');
+			}
 			done();
 		};
 
@@ -512,7 +517,7 @@ class Extension {
 				return;
 			}
 
-			$(new Image()).attr('src', image.image).on('load', () => {
+			$(new Image()).attr('src', image.view_url).on('load', () => {
 				this.updatingImage = false;
 				this.$body.removeClass('loading');
 				Cache.setImageData(image);
@@ -529,7 +534,8 @@ class Extension {
 					done();
 					return;
 				}
-				err();
+				err(msgs);
+				return;
 			}
 			this.showImages();
 			this.$body.removeClass('loading');
@@ -576,11 +582,11 @@ class Extension {
 		if (!imageData.id)
 			return;
 
-		let tags = imageData.tags.split(', '),
+		let { tags } = imageData,
 			artists = [];
 
 		$.each(tags, function(i, el) {
-			if (el.indexOf('artist:') === 0)
+			if (el.startsWith('artist:'))
 				artists.push(el.substring(7));
 		});
 
@@ -630,12 +636,15 @@ class Extension {
 	}
 
 	setBackgroundStyles(imageData) {
-		if (typeof imageData.image !== 'string')
+		const prop = 'view_url';
+		if (typeof imageData[prop] !== 'string') {
+			console.warn(`setBackgroundStyles called with object that does not have string property ${prop}`);
 			return;
+		}
 		this.$body.removeClass('no-pony');
 		this.hideImages();
-		$(new Image()).attr('src', imageData.image).on('load', () => {
-			let url = imageData.image.replace(/"/g, '%22');
+		$(new Image()).attr('src', imageData[prop]).on('load', () => {
+			let url = imageData[prop].replace(/"/g, '%22');
 			this.$style.html(
 				'#image{background-image:url("' + url + '")}' +
 				'#image-ghost{background-image:url("' + url + '")}'
