@@ -6,6 +6,7 @@ const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
 
 const LS_KEY = 'settings';
+export const FALLBACK_UPLOADER = 'Background Pony';
 export const RATING_TAGS = new Set(['safe', 'suggestive', 'questionable', 'explicit', 'semi-grimdark', 'grimdark', 'grotesque']);
 export const AVAILABLE_THEMES = new Set(['light', 'dark', 'red']);
 export const DEFAULT_DOMAIN = 'derpibooru.org';

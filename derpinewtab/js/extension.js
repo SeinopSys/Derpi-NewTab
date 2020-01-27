@@ -8,6 +8,7 @@ import Settings, {
 	RESOLUTION_CAP,
 	SEARCH_SETTINGS_KEYS,
 	SIDEBAR_OPEN_CLASS,
+	FALLBACK_UPLOADER,
 } from './settings.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
@@ -601,10 +602,11 @@ class Extension {
 		const score = imageData.upvotes - imageData.downvotes;
 		const interactions = Cache.getInteractions();
 		if (!$metadataList.length){
+			const uploader = imageData.uploader || FALLBACK_UPLOADER;
 			this.$data.append(
 				`<p id="metadata-list">
 					<span class="id"><span class="fa">${fa.hashtag}</span><span>${imageData.id}</span></span>
-					<span class="uploader"><span class="fa">${fa.upload}</span><span>${imageData.uploader.replace(/</g, '&lt;')}</span></span>
+					<span class="uploader"><span class="fa">${fa.upload}</span><span>${uploader.replace(/</g, '&lt;')}</span></span>
 					<a class="faves${interactions.fave ? ' active' : ''}"><span class="fa">${fa.star}</span><span>${imageData.faves}</span></a>
 					<a class="upvotes votes${interactions.up ? ' active' : ''}"><span class="fa">${fa.arrowUp}</span><span class="votecounts">${imageData.upvotes}</span></a>
 					<span class="score"><span>${score}</span></span>
@@ -616,7 +618,7 @@ class Extension {
 		}
 		else {
 			$metadataList.children('.uploader')
-				.children().last().text(imageData.uploader);
+				.children().last().text(imageData.uploader || FALLBACK_UPLOADER);
 			$metadataList.children('.faves').classIf(interactions.fave, 'active')
 				.children().last().html(imageData.faves);
 			$metadataList.children('.upvotes').classIf(interactions.up, 'active')

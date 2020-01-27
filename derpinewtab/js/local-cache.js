@@ -4,7 +4,7 @@ import { isFirefox } from "./firefox-detector.js";
 const { BehaviorSubject } = rxjs;
 const { distinctUntilChanged } = rxjs.operators;
 
-const LS_KEY = 'cache_v1';
+const LS_KEY = 'cache_v2';
 
 const DEFAULT_DATA = {
 	imageData: {},
