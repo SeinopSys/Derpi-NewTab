@@ -1,71 +1,71 @@
 :root {
-	--sidebar-size: 300px;
-	--fa-size: 1em;
-	--viewport-shadow-size: 15px;
-	--viewport-shadow-color: rgba(0,0,0,.4);
-	--scrollbar-width: 8px;
-	--settings-button-size: 72px;
-	--settings-button-spacing: 20px;
-	--dialog-continue-highlight-size: calc(var(--settings-button-size) * 3.14);
-	--dialog-continue-highlight-offset: calc(var(--dialog-continue-highlight-size) / -3.14);
+  --sidebar-size: 300px;
+  --fa-size: 1em;
+  --viewport-shadow-size: 15px;
+  --viewport-shadow-color: rgba(0, 0, 0, .4);
+  --scrollbar-width: 8px;
+  --settings-button-size: 72px;
+  --settings-button-spacing: 20px;
+  --dialog-continue-highlight-size: calc(var(--settings-button-size) * 3.14);
+  --dialog-continue-highlight-offset: calc(var(--dialog-continue-highlight-size) / -3.14);
 
-	--bg-color: var(--db-footer-bg);
-	--fg-color: var(--db-fg);
-	--block-theme: var(--db-theme-color);
-	--metabar-fg: var(--fg-color);
-	--switch-inactive-fg: var(--db-downvote);
-	--switch-active-fg: var(--db-upvote);
+  --bg-color: var(--db-footer-bg);
+  --fg-color: var(--db-fg);
+  --block-theme: var(--db-theme-color);
+  --metabar-fg: var(--fg-color);
+  --switch-inactive-fg: var(--db-downvote);
+  --switch-active-fg: var(--db-upvote);
 
-	--dark-metabar-bg: rgba(0, 0, 0, .8);
-	--dark-metabar-id-color: #ddd;
-	--dark-dialog-bg: rgba(0, 0, 0, 0.8);
-	--dark-dialog-fg: #fff;
-	--dark-block-warning: #ffa;
-	--dark-block-error: #faa;
-	--dark-block-success: #afa;
+  --dark-metabar-bg: rgba(0, 0, 0, .8);
+  --dark-metabar-id-color: #ddd;
+  --dark-dialog-bg: rgba(0, 0, 0, 0.8);
+  --dark-dialog-fg: #fff;
+  --dark-block-warning: #ffa;
+  --dark-block-error: #faa;
+  --dark-block-success: #afa;
 
-	--light-metabar-bg: rgba(255, 255, 255, .95);
-	--light-metabar-fg: var(--fg-color);
-	--light-metabar-id-color: #666;
-	--light-dialog-bg: rgba(255, 255, 255, 0.95);
-	--light-dialog-fg: #333;
-	--light-block-warning: #a80;
-	--light-block-error: #800;
-	--light-block-success: #080;
+  --light-metabar-bg: rgba(255, 255, 255, .95);
+  --light-metabar-fg: var(--fg-color);
+  --light-metabar-id-color: #666;
+  --light-dialog-bg: rgba(255, 255, 255, 0.95);
+  --light-dialog-fg: #333;
+  --light-block-warning: #a80;
+  --light-block-error: #800;
+  --light-block-success: #080;
 
-	--red-metabar-bg: rgba(100, 0, 0, .9);
-	--red-metabar-fg: var(--fg-color);
-	--red-metabar-id-color: #bbb;
-	--red-dialog-bg: rgba(50, 0, 0, 0.8);
-	--red-dialog-fg: #ee0;
-	--red-block-warning: #ca0;
-	--red-block-error: #e00;
-	--red-block-success: #0c0;
+  --red-metabar-bg: rgba(100, 0, 0, .9);
+  --red-metabar-fg: var(--fg-color);
+  --red-metabar-id-color: #bbb;
+  --red-dialog-bg: rgba(50, 0, 0, 0.8);
+  --red-dialog-fg: #ee0;
+  --red-block-warning: #ca0;
+  --red-block-error: #e00;
+  --red-block-success: #0c0;
 }
 :root.theme-dark {
-	--metabar-bg: var(--dark-metabar-bg);
-	--metabar-id-color: var(--dark-metabar-id-color);
-	--dialog-fg: var(--dark-dialog-fg);
-	--dialog-bg: var(--dark-dialog-bg);
-	--block-warning: var(--dark-block-warning);
-	--block-error: var(--dark-block-error);
-	--block-success: var(--dark-block-success);
+  --metabar-bg: var(--dark-metabar-bg);
+  --metabar-id-color: var(--dark-metabar-id-color);
+  --dialog-fg: var(--dark-dialog-fg);
+  --dialog-bg: var(--dark-dialog-bg);
+  --block-warning: var(--dark-block-warning);
+  --block-error: var(--dark-block-error);
+  --block-success: var(--dark-block-success);
 }
 :root.theme-light {
-	--metabar-bg: var(--light-metabar-bg);
-	--metabar-id-color: var(--light-metabar-id-color);
-	--dialog-fg: var(--light-dialog-fg);
-	--dialog-bg: var(--light-dialog-bg);
-	--block-warning: var(--light-block-warning);
-	--block-error: var(--light-block-error);
-	--block-success: var(--light-block-success);
+  --metabar-bg: var(--light-metabar-bg);
+  --metabar-id-color: var(--light-metabar-id-color);
+  --dialog-fg: var(--light-dialog-fg);
+  --dialog-bg: var(--light-dialog-bg);
+  --block-warning: var(--light-block-warning);
+  --block-error: var(--light-block-error);
+  --block-success: var(--light-block-success);
 }
 :root.theme-red {
-	--metabar-bg: var(--red-metabar-bg);
-	--metabar-id-color: var(--red-metabar-id-color);
-	--dialog-fg: var(--red-dialog-fg);
-	--dialog-bg: var(--red-dialog-bg);
-	--block-warning: var(--red-block-warning);
-	--block-error: var(--red-block-error);
-	--block-success: var(--red-block-success);
+  --metabar-bg: var(--red-metabar-bg);
+  --metabar-id-color: var(--red-metabar-id-color);
+  --dialog-fg: var(--red-dialog-fg);
+  --dialog-bg: var(--red-dialog-bg);
+  --block-warning: var(--red-block-warning);
+  --block-error: var(--red-block-error);
+  --block-success: var(--red-block-success);
 }

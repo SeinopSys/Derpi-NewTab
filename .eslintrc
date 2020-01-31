@@ -1,26 +1,26 @@
 {
-	"root": true,
-	"extends": "eslint:recommended",
-	"parserOptions": {
-		"ecmaVersion": 2017,
-		"sourceType": "module"
-	},
-	"env": {
-		"es6": true,
-		"browser": true,
-		"jquery": true
-	},
-	"rules": {
-		"no-unused-vars": "warn",
-		"no-console": "off",
-		"object-curly-spacing": [
-			"error",
-			"always"
-		]
-	},
-	"globals": {
-		"chrome": true,
-		"browser": true,
-		"rxjs": true
-	}
+  "root": true,
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2017,
+    "sourceType": "module"
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "jquery": true
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "object-curly-spacing": [
+      "error",
+      "always"
+    ]
+  },
+  "globals": {
+    "chrome": true,
+    "browser": true,
+    "rxjs": true
+  }
 }

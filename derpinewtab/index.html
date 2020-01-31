@@ -1,146 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<title>Derpi-New Tab</title>
-	<link rel="stylesheet" href="css/style.css">
-	<style id="style"></style>
+  <meta charset="utf-8">
+  <title>Derpi-New Tab</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style id="style"></style>
 </head>
 <body class="loading offline">
 
 <div id="dialog" class="hidden">
-	<div id="dialog-companion" class="hidden">
-		<label class="to-menu" for="close-dialog-button"></label>
-	</div>
-	<div id="dialog-inner">
-		<h1>Welcome to Derpi-New Tab</h1>
-		<p>
-			Choose your preferred theme<br>
-			<span class="faded">(you will be able to change this later)</span>
-		</p>
-		<ul id="theme-list"></ul>
-		<button class="button next">Next</button>
-		<div class="continue">
-			<p>
-				You can access the settings at any time by clicking the menu icon in the bottom left.<br>
-				<span class="faded">(this message is only displayed once)</span>
-			</p>
-			<button class="button close" id="close-dialog-button">Got it</button>
-		</div>
-	</div>
+  <div id="dialog-companion" class="hidden">
+    <label class="to-menu" for="close-dialog-button"></label>
+  </div>
+  <div id="dialog-inner">
+    <h1>Welcome to Derpi-New Tab</h1>
+    <p>
+      Choose your preferred theme<br>
+      <span class="faded">(you will be able to change this later)</span>
+    </p>
+    <ul id="theme-list"></ul>
+    <button class="button next">Next</button>
+    <div class="continue">
+      <p>
+        You can access the settings at any time by clicking the menu icon in the bottom left.<br>
+        <span class="faded">(this message is only displayed once)</span>
+      </p>
+      <button class="button close" id="close-dialog-button">Got it</button>
+    </div>
+  </div>
 </div>
 
 <aside id="settings-wrap">
-	<div id="settings">
-		<header>Settings</header>
-		<div id="offline-notice" class="block theme-block">
-			<img src="img/no-pony-100.svg" alt="Offline illustration">
-			<strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
-		</div>
-		<div id="chrome-bug-notice" class="block warning-block">
-			<p>Due to a combination of a <a href="https://bugs.chromium.org/p/chromium/issues/detail?id=1017300" target="_blank" rel="noopener">Chrome bug</a> and Derpibooru's <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery" target="_blank" rel="noopener">CSRF protection</a> method it's currently not possible to use the voting buttons. This does not affect <a href="https://getfirefox.com" target="_blank" rel="noopener">Firefox</a> users.
-			<span class="clear"></span>
-		</div>
-		<section id="filter-settings">
-			<h2>
-				<span class="fa setting-icon" data-fa="filter"></span>
-				Filtering
-			</h2>
-			<p>Filtering is controlled by whatever filter you have selected on <a href="https://domain.tld/" class="anchor-domain contents-domain"></a> (the <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> filter is used if you aren't logged in). You may also choose to specify a filter ID, but be aware that if you are logged in on <span class="contents-domain"></span> your currently selected filter will override this setting.</p>
-			<form>
-				<input type="number" step="1" class="input input--block input--no-spin" placeholder="Paste filter ID here">
-				<button class="button input--block">Apply</button>
-				<div class="block error-block">Invalid filter ID</div>
-			</form>
-			<div class="block visible theme-block">You have to enable/disable specific rating tags individually regardless of your filter setting.</div>
-		</section>
-		<section id="domain-settings" class="if-interactive">
-			<h2>
-				<span class="fa setting-icon" data-fa="globe"></span>
-				Preferred domain
-			</h2>
-			<p>Derpibooru can be accessed from multiple domains. You should set this to the domain you prefer to let you use the voting buttons and for your current filter to apply when searching.</p>
-			<select class="input input--block"></select>
-			<button id="firefox-domain-apply" class="button input--block" disabled>Apply</button>
-		</section>
-		<section id="search-settings">
-			<h2>
-				<span class="fa setting-icon" data-fa="search"></span>
-				Search
-			</h2>
-			<p>The settings in this section will wait until you make no changes for <strong>1 second</strong> before applying to both save bandwidth and avoid spamming Derpibooru with requests.</p>
-			<h3>Rating Tags</h3>
-			<p>Set the rating tags you want to allow when requesting images. Click to toggle.</p>
-			<div class="rating-tags"></div>
-			<div class="block error-block" id="no-rating-tags">You need to select at least one rating tag.</div>
-			<h3>Restrictions</h3>
-			<label class="switch">
-				<input type="checkbox" name="andtags">
-				<span class="lever"></span>
-				<span>Use <code>AND</code> between selected tags</span>
-			</label>
-			<p>Changes the default <code>OR</code> separator between selected tags in the search query. Turning this on will require all tags you've enabled (instead of at least one) to be present on an image for it to display. Some tags are mutually exclusive; selecting them with this on can produce no results. Consult the <a href="https://domain.tld/pages/tags" class="anchor-domain">Tag Guidelines</a> for more information.</p>
-			<label class="switch">
-				<input type="checkbox" name="exclude">
-				<span class="lever"></span>
-				<span>Exclude unselected tags</span>
-			</label>
-			<p>Tags like grimdark and explicit are often used together, which means that selecting either one could give you results with both tags. For this reason, as of v2.3.2 tags that are not selected will be excluded from the search. You can turn this off to revert to the old behavior.</p>
-			<label class="switch">
-				<input type="checkbox" name="showeqg">
-				<span class="lever"></span>
-				<span>Show <abbr title="Equestria Girls">EQG</abbr>-related images</span>
-			</label>
-			<p>Your filter must not hide the "equestria girls" tag (or related tags like "human") for this option to have any effect.</p>
-			<label class="switch">
-				<input type="checkbox" name="hd">
-				<span class="lever"></span>
-				<span>Require 720p+ resolution</span>
-			</label>
-			<p>Turn this off to allow displaying low resolution images.</p>
-			<label class="switch">
-				<input type="checkbox" name="rescap">
-				<span class="lever"></span>
-				<span>Resolution cap</span>
-			</label>
-			<p>By default a resolution cap of <span id="rescap-width"></span>&times;<span id="rescap-height"></span> is enforced to avoid freezing your browser when it tries to load an absurdly large wallpaper. You may choose to turn this off, but be prepared for potential lag should someone upload an 8k+ image.</p>
-			<h3>View search results</h3>
-			<p>You can use the button below to open the search query used by the extension on the Derpibooru website.<span class="if-interactive"> If you've accidentally hidden an image and reloaded you can use this page to undo it; just click the "Show Hidden" link in the top right.</span></p>
-			<a id="search-link" class="button input--block" target="_blank">Open search page</a>
-		</section>
-		<section id="metadata-settings">
-			<h2>
-				<span class="fa setting-icon" data-fa="info"></span>
-				Metabar
-			</h2>
-			<p>Customize the metabar found at the bottom of the page.</p>
-		</section>
-		<section id="theme-settings">
-			<h2>
-				<span class="fa setting-icon" data-fa="palette"></span>
-				Theme
-			</h2>
-		</section>
-		<footer>
-			<p>
-				Derpi-New Tab<span id="version"></span><br>
-				by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp;
-				<a href="https://github.com/SeinopSys/Derpi-NewTab/graphs/contributors">contributors</a><br>
-				<a href="https://github.com/SeinopSys/Derpi-NewTab">View source code</a><br>
-				Icons: <a href="https://fontawesome.com/license">Font Awesome Free</a> v5.10.1
-			</p>
-			<button id="clear-settings" class="button button--state-danger">Clear all settings</button>
-		</footer>
-	</div>
+  <div id="settings">
+    <header>Settings</header>
+    <div id="offline-notice" class="block theme-block">
+      <img src="img/no-pony-100.svg" alt="Offline illustration">
+      <strong>Pony with care</strong> You don't seem to have an ac&shy;tive in&shy;ter&shy;net con&shy;nec&shy;tion, some set&shy;tings may not have any ef&shy;fect until you're back online.
+    </div>
+    <section id="filter-settings">
+      <h2>
+        <span class="fa setting-icon" data-fa="filter"></span>
+        Filtering
+      </h2>
+      <p>Enter the ID of your preferred filter. This is usually found at the end of the URL when you click "View this filter". If it's private you will also need to provide your API key. <a href="https://domain.tld/filters/100073" class="anchor-domain">Default</a> will be used if no ID is provided.</p>
+      <form>
+        <label for="filter-id-input">Filter ID</label>
+        <input id="filter-id-input" type="number" step="1" class="input input--block input--no-spin" placeholder="100073">
+        <div class="block error-block">Invalid filter ID</div>
+        <label for="api-key-input">API Key</label>
+        <input id="api-key-input" type="password" class="input input--block input--no-spin">
+        <button class="button input--block" id="save-filter-id">Apply</button>
+        <button class="button button--state-danger input--block" id="reset-filter-id" type="reset">Reset to Default</button>
+
+        <p>You can also use the button below to fetch your current settings from <span class="contents-domain"></span> and store them in the extension with a single button press.</p>
+        <button type="button" class="button button--state-success input--block" id="fetch-current-filter">Get Current &amp; Apply</button>
+      </form>
+      <div class="block visible theme-block mt-2">You have to enable/disable specific rating tags individually regardless of your filter setting.</div>
+    </section>
+    <section id="domain-settings" class="if-interactive">
+      <h2>
+        <span class="fa setting-icon" data-fa="globe"></span>
+        Preferred domain
+      </h2>
+      <p>Derpibooru can be accessed from multiple domains. You should set this to the domain you prefer to let you use the voting buttons and for easy access to your current filter settings.</p>
+      <select class="input input--block"></select>
+      <button id="firefox-domain-apply" class="button input--block" disabled>Apply</button>
+    </section>
+    <section id="search-settings">
+      <h2>
+        <span class="fa setting-icon" data-fa="search"></span>
+        Search
+      </h2>
+      <p>The settings in this section will wait until you make no changes for <strong>1 second</strong> before applying to both save bandwidth and avoid spamming Derpibooru with requests.</p>
+      <h3>Rating Tags</h3>
+      <p>Set the rating tags you want to allow when requesting images. Click to toggle.</p>
+      <div class="rating-tags"></div>
+      <div class="block error-block" id="no-rating-tags">You need to select at least one rating tag.</div>
+      <h3>Restrictions</h3>
+      <label class="switch">
+        <input type="checkbox" name="andtags">
+        <span class="lever"></span>
+        <span>Use <code>AND</code> between selected tags</span>
+      </label>
+      <p>Changes the default <code>OR</code> separator between selected tags in the search query. Turning this on will require all tags you've enabled (instead of at least one) to be present on an image for it to display. Some tags are mutually exclusive; selecting them with this on can produce no results. Consult the <a href="https://domain.tld/pages/tags" class="anchor-domain">Tag Guidelines</a> for more information.</p>
+      <label class="switch">
+        <input type="checkbox" name="exclude">
+        <span class="lever"></span>
+        <span>Exclude unselected tags</span>
+      </label>
+      <p>Tags like grimdark and explicit are often used together, which means that selecting either one could give you results with both tags. For this reason, as of v2.3.2 tags that are not selected will be excluded from the search. You can turn this off to revert to the old behavior.</p>
+      <label class="switch">
+        <input type="checkbox" name="showeqg">
+        <span class="lever"></span>
+        <span>Show <abbr title="Equestria Girls">EQG</abbr>-related images</span>
+      </label>
+      <p>Your filter must not hide the "equestria girls" tag (or related tags like "human") for this option to have any effect.</p>
+      <label class="switch">
+        <input type="checkbox" name="hd">
+        <span class="lever"></span>
+        <span>Require 720p+ resolution</span>
+      </label>
+      <p>Turn this off to allow displaying low resolution images.</p>
+      <label class="switch">
+        <input type="checkbox" name="rescap">
+        <span class="lever"></span>
+        <span>Resolution cap</span>
+      </label>
+      <p>By default a resolution cap of <span id="rescap-width"></span>&times;<span id="rescap-height"></span> is enforced to avoid freezing your browser when it tries to load an absurdly large wallpaper. You may choose to turn this off, but be prepared for potential lag should someone upload an 8k+ image.</p>
+      <h3>View search results</h3>
+      <p>You can use the button below to open the search query used by the extension on the Derpibooru website.<span class="if-interactive"> If you've accidentally hidden an image and reloaded you can use this page to undo it; just click the "Show Hidden" link in the top right.</span></p>
+      <a id="search-link" class="button input--block" target="_blank">Open search page</a>
+      <p><em>Note that this will display results using your currently selected filter instead of the one configured above due to Derpibooru API limitations.</em></p>
+    </section>
+    <section id="metadata-settings">
+      <h2>
+        <span class="fa setting-icon" data-fa="info"></span>
+        Metabar
+      </h2>
+      <p>Customize the metabar found at the bottom of the page.</p>
+    </section>
+    <section id="theme-settings">
+      <h2>
+        <span class="fa setting-icon" data-fa="palette"></span>
+        Theme
+      </h2>
+    </section>
+    <footer>
+      <p>
+        Derpi-New Tab<span id="version"></span><br>
+        by <a href="https://github.com/SeinopSys">SeinopSys</a> &amp;
+        <a href="https://github.com/SeinopSys/Derpi-NewTab/graphs/contributors">contributors</a><br>
+        <a href="https://github.com/SeinopSys/Derpi-NewTab">View source code</a><br>
+        Icons: <a href="https://fontawesome.com/license">Font Awesome Free</a> v5.10.1
+      </p>
+      <button id="clear-settings" class="button button--state-danger">Clear all settings</button>
+    </footer>
+  </div>
 </aside>
 
 <main id="viewport">
-	<div id="image"></div>
-	<div id="image-ghost"></div>
-	<div id="metadata-area" class="mouse-stopped">
-		<div id="show-settings-button" class="disabled fa" data-fa="bars"></div>
-		<div id="data"></div>
-	</div>
+  <div id="image"></div>
+  <div id="image-ghost"></div>
+  <div id="metadata-area" class="mouse-stopped">
+    <div id="show-settings-button" class="disabled fa" data-fa="bars"></div>
+    <div id="data"></div>
+  </div>
 </main>
 
 <script src="js/vendor/jquery-3.3.1.min.js" defer></script>

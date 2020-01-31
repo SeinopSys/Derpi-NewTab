@@ -1,36 +1,36 @@
 import Settings from './settings.js';
 
-const isSignedIn = html => /<\/head><body data-signed-in="true"/.test(html);
-
 let tokenCache = {};
 
 const useCacheForMethods = {
-	PUT: true,
-	GET: false,
+  POST: true,
+  DELETE: true,
+  GET: false,
 };
 
 export default {
-	get(requestMethod) {
-		if (tokenCache.token && useCacheForMethods[requestMethod] === true)
-			return new Promise(res => {
-				res(tokenCache)
-			});
-		return new Promise((res, rej) => {
-			fetch(`https://${Settings.getDomain()}/pages/about`, { credentials: 'include' })
-				.then(resp => resp.text())
-				.catch(rej)
-				.then(resp => {
-					let token = resp.match(/<meta name="csrf-token" content="([^"]+)" \/>/);
-					if (token[1]){
-						tokenCache = { token: token[1], signed_in: isSignedIn(resp) };
-						res(tokenCache);
-					}
-					rej(resp);
-				})
-				.catch(rej);
-		});
-	},
-	clear() {
-		tokenCache = {};
-	}
+  get(requestMethod) {
+    if (tokenCache.token && useCacheForMethods[requestMethod] === true)
+      return Promise.resolve(tokenCache);
+    return new Promise((res, rej) => {
+      fetch(`https://${Settings.getDomain()}/pages/about`, { credentials: 'include' })
+        .then(resp => resp.text())
+        .catch(rej)
+        .then(resp => {
+          const parser = new DOMParser();
+          const $page = $(parser.parseFromString(resp, 'text/html'));
+          let token = $page.find('meta[name="csrf-token"]').attr('content');
+          if (token){
+            tokenCache = { token, signed_in: $page.find('.header__link-user').length > 0 };
+            res(tokenCache);
+            return;
+          }
+          rej(resp);
+        })
+        .catch(rej);
+    });
+  },
+  clear() {
+    tokenCache = {};
+  },
 };
