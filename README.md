@@ -1,5 +1,5 @@
-<p align="center"><img src="https://raw.githubusercontent.com/ponydevs/Derpi-NewTab/master/screenshots/chrome/3_display.png" alt="Derpi-New Tab Chrome Screenshot" width="300px"> <img src="https://raw.githubusercontent.com/ponydevs/Derpi-NewTab/master/screenshots/firefox/3_display.png" alt="Derpi-New Tab Firefox Screenshot" width="300px"></p>
-<h1 align="center"><img src="https://raw.githubusercontent.com/ponydevs/Derpi-NewTab/master/derpinewtab/img/64.png" alt="Derpi-New Tab Chrome Screenshot" height="30px"> Derpi-New Tab</h1>
+<p align="center"><img src="https://raw.githubusercontent.com/SeinopSys/Derpi-NewTab/master/screenshots/chrome/3_display.png" alt="Derpi-New Tab Chrome Screenshot" width="300px"> <img src="https://raw.githubusercontent.com/SeinopSys/Derpi-NewTab/master/screenshots/firefox/3_display.png" alt="Derpi-New Tab Firefox Screenshot" width="300px"></p>
+<h1 align="center"><img src="https://raw.githubusercontent.com/SeinopSys/Derpi-NewTab/master/derpinewtab/img/64.png" alt="Derpi-New Tab Chrome Screenshot" height="30px"> Derpi-New Tab</h1>
 
 A simplistic "New tab" page replacement for Google Chrome and Firefox which features pony wallpapers from [Derpibooru.org](http://derpibooru.org/).
 
