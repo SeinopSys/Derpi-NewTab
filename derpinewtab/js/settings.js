@@ -254,17 +254,21 @@ class Settings {
           target[name] = Boolean(value);
           break;
         case 'filterId':
-          if (value !== null && (typeof value !== 'number' || isNaN(value) || !isFinite(value) || value < 1)){
-            if (strict){
-              rej();
+          if (value === null) {
+            target[name] = DEFAULT_SETTINGS.filterId;
+          } else {
+            if (typeof value !== 'number' || isNaN(value) || !isFinite(value) || value < 1){
+              if (strict){
+                rej();
+                return;
+              }
+
+              target[name] = DEFAULT_SETTINGS.filterId;
+              res();
               return;
             }
-
-            target[name] = null;
-            res();
-            return;
+            target[name] = value;
           }
-          target[name] = value;
           break;
         case 'apiKey':
           target[name] = value;
@@ -315,7 +319,7 @@ class Settings {
   async fetchCurrentFilter() {
     return new Promise((res, rej) => {
       const fetchDomain = this.getDomain();
-      fetch(`https://${fetchDomain}/registration/edit`, {
+      fetch(`https://${fetchDomain}/registrations/edit`, {
         redirect: 'manual',
         credentials: 'include',
       })

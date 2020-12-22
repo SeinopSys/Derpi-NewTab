@@ -300,22 +300,47 @@ class Extension {
       localStorage.clear();
       location.reload();
     });
-    const getFilterIdFromInputValue = value => value.length === 0 ? null : parseInt(value, 10);
+    const getFilterIdFromInputValue = value => value.length === 0 ? DEFAULT_SETTINGS.filterId : parseInt(value, 10);
+    const getApiKeyFromInputValue = value => value.length === 0 ? null : value.trim();
     const $filterErrorBlock = this.$filterSettings.find('.error-block').stop();
-    this.$filterIdInput.on('keydown keyup change', () => {
-      const val = getFilterIdFromInputValue(this.$filterIdInput.val());
-      this.$saveFilterId.attr('disabled', val === Settings.getFilterId());
-      this.$resetFilterId.attr('disabled', val === null || val === DEFAULT_SETTINGS.filterId);
-    }).trigger('keydown');
+    let filterApplyHandlerDebounce = null;
+    const filterApplyStateUpdate = () => {
+      if (filterApplyHandlerDebounce) {
+        return;
+      }
+      filterApplyHandlerDebounce = setTimeout(() => {
+        const filterIdValue = getFilterIdFromInputValue(this.$filterIdInput.val());
+        const filterIdMatchesSetting = filterIdValue === Settings.getFilterId();
+        const filterIdMatchesDefault = filterIdValue === DEFAULT_SETTINGS.filterId;
+
+        const apiKeyValue = getApiKeyFromInputValue(this.$apiKeyInput.val());
+        const apiKeyMatchesSetting = apiKeyValue === Settings.getApiKey();
+        const apiKeyMatchesDefault = apiKeyValue === DEFAULT_SETTINGS.apiKey;
+
+        this.$saveFilterId.attr('disabled', filterIdMatchesSetting && apiKeyMatchesSetting);
+        this.$resetFilterId.attr('disabled', filterIdMatchesDefault && apiKeyMatchesDefault);
+
+        clearTimeout(filterApplyHandlerDebounce);
+        filterApplyHandlerDebounce = null;
+      }, 100);
+    };
+    this.$filterIdInput.on('keydown keyup change', filterApplyStateUpdate);
+    this.$apiKeyInput.on('keydown keyup change', filterApplyStateUpdate);
+    filterApplyStateUpdate();
+
     this.$filterSettings.on('submit', 'form', async (e) => {
       e.preventDefault();
 
       const filterIdString = this.$filterIdInput.val();
       const filterId = getFilterIdFromInputValue(filterIdString);
+
+      const apiKeyString = this.$apiKeyInput.val();
+      const apiKey = getApiKeyFromInputValue(apiKeyString);
       $filterErrorBlock.stop();
       try {
-        await Settings.setSetting('filterId', filterId);
+        await Settings.setSettings({ filterId, apiKey});
       } catch (e){
+        console.error(e);
         $filterErrorBlock.slideDown();
         this.$filterIdInput.focus();
         return;
@@ -359,7 +384,6 @@ class Extension {
       this.updateImage();
     });
     this.$metadataArea.on('mouseenter', () => this.stopMetabarTimer());
-    this.$metadataArea.on('mouseleave', () => this.startMetabarTimer());
 
     const $body = this.$body;
     this.$data.on('click', '.upvotes', function() {
@@ -476,7 +500,7 @@ class Extension {
       map(() => {
         const bodyHasClass = this.$body.hasClass(SIDEBAR_OPEN_CLASS);
         const barHover = this.$metadataArea.is(':hover');
-        return !(bodyHasClass || barHover);
+        return !bodyHasClass && !barHover;
       }),
     ).subscribe(restart => handler(restart));
     handler(true, true);
