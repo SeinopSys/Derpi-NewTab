@@ -61,7 +61,6 @@ export const DEFAULT_SETTINGS = {
   showVoteCounts: true,
   showComments: true,
   showHide: true,
-  dismissBugNotice2: false,
   theme: getDefaultTheme(),
 };
 
@@ -103,12 +102,16 @@ class Settings {
     return this.searchSources.apiKey.value;
   }
 
-  getSearchLink() {
-    return this.searchLinkSource.value;
+  getAndTags() {
+    return this.searchSources.andtags.value;
   }
 
-  getDismissBugNotice() {
-    return this.dismissBugNoticeSource.value;
+  getExclude() {
+    return this.searchSources.exclude.value;
+  }
+
+  getSearchLink() {
+    return this.searchLinkSource.value;
   }
 
   getTheme() {
@@ -135,7 +138,6 @@ class Settings {
     this.searchLinkSource = new BehaviorSubject(this._generateSearchLink());
     this.searchLink = this.searchLinkSource.asObservable().pipe(distinctUntilChanged());
 
-    this.dismissBugNoticeSource = new BehaviorSubject(DEFAULT_SETTINGS.dismissBugNotice2);
     this.themeSource = new BehaviorSubject(DEFAULT_SETTINGS.theme);
     this.theme = this.themeSource.asObservable().pipe(distinctUntilChanged());
   }
@@ -144,9 +146,9 @@ class Settings {
   _getTagsQuery() {
     const allowedQuery = new Set(this.getTags());
     const finalQuery = [
-      Array.from(allowedQuery).join(this.searchSources.andtags.value !== true ? ' OR ' : ' AND '),
+      Array.from(allowedQuery).join(this.getAndTags() !== true ? ' OR ' : ' AND '),
     ];
-    if (this.searchSources.exclude.value === true){
+    if (this.getExclude() === true){
       const hiddenQuery = [];
       for (let tag of RATING_TAGS)
         if (!allowedQuery.has(tag))
@@ -170,10 +172,10 @@ class Settings {
   /** @private */
   _generateSearchLink() {
     let size = (this.getHD() ? ['width.gte:1280', 'height.gte:720'] : []);
-    if (this.getResCap().value === true)
+    if (this.getResCap() === true)
       size = size.concat([`width.lte:${RESOLUTION_CAP[0]}`, `height.lte:${RESOLUTION_CAP[1]}`]);
     let query = ['wallpaper', this._getTagsQuery()];
-    if (this.getEQG().value !== true)
+    if (this.getEQG() !== true)
       query.push('-equestria girls');
     if (size.length > 0)
       query = query.concat(size);
@@ -212,7 +214,6 @@ class Settings {
       METADATA_SETTINGS_KEYS.forEach(key => {
         this.metaSources[key].next(this._settings[key]);
       });
-      this.dismissBugNoticeSource.next(this._settings.dismissBugNotice2);
       this.themeSource.next(this._settings.theme);
     }
     else {
@@ -250,9 +251,6 @@ class Settings {
               });
           }
           return;
-        case 'dismissBugNotice2':
-          target[name] = Boolean(value);
-          break;
         case 'filterId':
           if (value === null) {
             target[name] = DEFAULT_SETTINGS.filterId;
@@ -310,7 +308,7 @@ class Settings {
     const tempSettings = this._tmpSettings;
     const verifiedSettings = {};
 
-    for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS, ['dismissBugNotice2', 'theme']))
+    for (let key of SEARCH_SETTINGS_KEYS.concat(METADATA_SETTINGS_KEYS, ['theme']))
       await this._setSetting(key, tempSettings, verifiedSettings);
 
     this.setSettings(verifiedSettings);
