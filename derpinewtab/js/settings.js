@@ -9,6 +9,7 @@ const LS_KEY = 'settings';
 export const FALLBACK_UPLOADER = 'Background Pony';
 export const RATING_TAGS = new Set(['safe', 'suggestive', 'questionable', 'explicit', 'semi-grimdark', 'grimdark', 'grotesque']);
 export const AVAILABLE_THEMES = new Set(['light', 'dark', 'red']);
+export const QUERY_CONTROL = new Set(['simple', 'advanced']);
 export const DEFAULT_DOMAIN = 'derpibooru.org';
 export const DOMAINS = new Set([DEFAULT_DOMAIN, 'www.derpibooru.org', 'trixiebooru.org']);
 export const RESOLUTION_CAP = [4096, 4096]; // w, h
@@ -25,6 +26,8 @@ export const SEARCH_SETTINGS_KEYS = [
   'domain',
   'filterId',
   'apiKey',
+  'queryControl',
+  'customQuery'
 ];
 export const METADATA_SETTINGS_KEYS = (() => {
   const base = [
@@ -62,6 +65,8 @@ export const DEFAULT_SETTINGS = {
   showComments: true,
   showHide: true,
   theme: getDefaultTheme(),
+  queryControl: 'simple',
+  customQuery: null,
 };
 
 // Detect system dark mode setting and use appropriate default theme
@@ -108,6 +113,14 @@ class Settings {
 
   getExclude() {
     return this.searchSources.exclude.value;
+  }
+
+  getQueryControl() {
+    return this.searchSources.queryControl.value;
+  }
+
+  getCustomQuery() {
+    return this.searchSources.customQuery.value;
   }
 
   getSearchLink() {
@@ -170,7 +183,11 @@ class Settings {
   }
 
   /** @private */
-  _generateSearchLink() {
+  _generateSearchQuery() {
+    if (this.getQueryControl() === 'advanced') {
+      return this.getCustomQuery() || '*';
+    }
+
     let size = (this.getHD() ? ['width.gte:1280', 'height.gte:720'] : []);
     if (this.getResCap() === true)
       size = size.concat([`width.lte:${RESOLUTION_CAP[0]}`, `height.lte:${RESOLUTION_CAP[1]}`]);
@@ -179,7 +196,12 @@ class Settings {
       query.push('-equestria girls');
     if (size.length > 0)
       query = query.concat(size);
-    const q = encodeURIComponent(query.join(' AND ')).replace(/%20/g, '+');
+    return query.join(' AND ');
+  }
+
+  /** @private */
+  _generateSearchLink() {
+    const q = encodeURIComponent(this._generateSearchQuery()).replace(/%20/g, '+');
     const filter = this._getFilterIdQuery();
     return `https://${this.getDomain()}/api/v1/json/search/images?per_page=5&q=${q}${filter}`;
   }
@@ -274,6 +296,13 @@ class Settings {
         case 'theme':
           if (AVAILABLE_THEMES.has(value))
             target[name] = value;
+          break;
+        case 'queryControl':
+          if (QUERY_CONTROL.has(value))
+            target[name] = value;
+          break;
+        case 'customQuery':
+          target[name] = typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
           break;
         default:
           if (SEARCH_SETTINGS_KEYS.includes(name) || METADATA_SETTINGS_KEYS.includes(name))

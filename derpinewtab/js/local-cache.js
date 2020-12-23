@@ -52,7 +52,7 @@ class LocalCache {
     this.imageDataSource.next(this._cache.imageData);
     if (save){
       this.save();
-      this.updateInteractions();
+      void this.updateInteractions();
     }
   }
 

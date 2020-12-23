@@ -1,15 +1,16 @@
 import Settings, {
-	AVAILABLE_THEMES,
-	DEFAULT_SETTINGS,
-	DOMAINS,
-	FALLBACK_UPLOADER,
-	METABAR_DISAPPEAR_TIMEOUT,
-	METABAR_OPAQUE_CLASS,
-	METADATA_SETTINGS_KEYS,
-	RATING_TAGS,
-	RESOLUTION_CAP,
-	SEARCH_SETTINGS_KEYS,
-	SIDEBAR_OPEN_CLASS,
+  AVAILABLE_THEMES,
+  DEFAULT_SETTINGS,
+  DOMAINS,
+  FALLBACK_UPLOADER,
+  METABAR_DISAPPEAR_TIMEOUT,
+  METABAR_OPAQUE_CLASS,
+  METADATA_SETTINGS_KEYS,
+  QUERY_CONTROL,
+  RATING_TAGS,
+  RESOLUTION_CAP,
+  SEARCH_SETTINGS_KEYS,
+  SIDEBAR_OPEN_CLASS,
 } from './settings.js';
 import csrfToken from './csrf-token.js';
 import Cache from './local-cache.js';
@@ -24,7 +25,14 @@ const { fromEvent } = rxjs;
 const { map, throttleTime } = rxjs.operators;
 
 const SEARCH_SETTINGS_CHECKBOX_KEYS = (() => {
-  const SEARCH_SETTINGS_NON_CHECKBOX_KEYS = new Set(['tags', 'domain', 'filterId']);
+  const SEARCH_SETTINGS_NON_CHECKBOX_KEYS = new Set([
+    'tags',
+    'domain',
+    'filterId',
+    'apiKey',
+    'queryControl',
+    'customQuery',
+  ]);
 
   return Array.from(
     setHelper.difference(new Set(SEARCH_SETTINGS_KEYS), SEARCH_SETTINGS_NON_CHECKBOX_KEYS),
@@ -47,12 +55,20 @@ export const THEME_NAMES = {
   red: 'Red',
 };
 
+export const QUERY_CONTROL_NAMES = {
+  simple: 'Simple',
+  advanced: 'Advanced',
+};
+
 class Extension {
   constructor() {
     this.$settings = $('#settings');
     this.$version = $('#version');
     this.$searchSettings = $('#search-settings');
     this.$body = $('body');
+    this.$image = $('#image');
+    this.$imageGhost = $('#image-ghost');
+    this.$webm = $('#webm');
     this.$metaSettings = $('#metadata-settings');
     this.$filterSettings = $('#filter-settings');
     this.$filterIdInput = $('#filter-id-input');
@@ -73,6 +89,10 @@ class Extension {
     this.$rescapHeight = $('#rescap-height');
     this.$noRatingTags = $('#no-rating-tags');
     this.$metadataArea = $('#metadata-area');
+    this.$queryControlSettings = $('#query-control-settings');
+    this.$showQuerySimple = $('#show-query-simple');
+    this.$showQueryAdvanced = $('#show-query-advanced');
+    this.$customQueryInput = $('#custom-query-input');
 
     this.$ratingTags = this.$settings.find('.rating-tags');
     this.$domainSelect = this.$domainSettings.find('select');
@@ -95,7 +115,7 @@ class Extension {
   async init() {
     await Settings.init();
     // Try to avoid FOUC by doing this ASAP
-    this.loadTheme();
+    this.subscribeToTheme();
 
     this.$version.text(' v' + chrome.runtime.getManifest().version);
     this.$rescapWidth.text(RESOLUTION_CAP[0]);
@@ -110,12 +130,13 @@ class Extension {
     this.handleFirstRun();
   }
 
-  loadTheme() {
+  subscribeToTheme() {
     Settings.theme.subscribe(theme => {
       setTimeout(() => {
         if (this.$themeRadios){
-          this.$themeRadios.prop('checked', false);
-          this.$themeRadios.filter((_, el) => el.value === theme).prop('checked', true);
+          this.$themeRadios.each((_, el) => {
+            el.checked = el.value === theme;
+          });
         }
         const $root = $('html');
         const rootClasses = $root.attr('class');
@@ -128,23 +149,6 @@ class Extension {
         $root.addClass(newThemeClass);
       });
     });
-
-    // Theme settings
-    const currentTheme = Settings.getTheme();
-    AVAILABLE_THEMES.forEach(theme => {
-      this.$themeSettings.append(
-        $(document.createElement('label')).attr('class', 'switch').append(
-          $(document.createElement('input')).attr({
-            type: 'checkbox',
-            name: 'theme',
-            value: theme,
-          }).prop('checked', currentTheme === theme),
-          `<span class="button"></span>`,
-          $(document.createElement('span')).text(THEME_NAMES[theme]),
-        ),
-      );
-    });
-    this.$themeRadios = this.$themeSettings.find('.switch input');
   }
 
   processIcons() {
@@ -187,6 +191,43 @@ class Extension {
       );
     });
     this.$metaToggles = this.$metaSettings.find('.switch input');
+
+    // Theme settings
+    const currentTheme = Settings.getTheme();
+    AVAILABLE_THEMES.forEach(theme => {
+      this.$themeSettings.append(
+        $(document.createElement('label')).attr('class', 'switch').append(
+          $(document.createElement('input')).attr({
+            type: 'checkbox',
+            name: 'theme',
+            value: theme,
+          }).prop('checked', currentTheme === theme),
+          `<span class="button"></span>`,
+          $(document.createElement('span')).text(THEME_NAMES[theme]),
+        ),
+      );
+    });
+    this.$themeRadios = this.$themeSettings.find('.switch input');
+
+    // Query control settings
+    const currentQueryControl = Settings.getQueryControl();
+    QUERY_CONTROL.forEach(queryControl => {
+      this.$queryControlSettings.append(
+        $(document.createElement('label')).attr('class', 'switch').append(
+          $(document.createElement('input')).attr({
+            type: 'checkbox',
+            name: 'queryControl',
+            value: queryControl,
+          }).prop('checked', currentQueryControl === queryControl),
+          `<span class="button"></span>`,
+          $(document.createElement('span')).text(QUERY_CONTROL_NAMES[queryControl]),
+        ),
+      );
+    });
+    this.$queryControlRadios = this.$queryControlSettings.find('.switch input');
+
+    // Set stored value into custom query input field
+    this.$customQueryInput.val(Settings.getCustomQuery());
   }
 
   createSubscriptions() {
@@ -227,6 +268,16 @@ class Extension {
         });
       });
     });
+    Settings.queryControl.subscribe(selectedControl => {
+      setTimeout(() => {
+        this.$queryControlRadios.each((_, el) => {
+          el.checked = el.value === selectedControl;
+        });
+        this.$showQuerySimple.add(this.$showQueryAdvanced).each((_, el) => {
+          $(el).attr('hidden', el.id.indexOf(selectedControl) === -1);
+        });
+      });
+    });
 
     Connectivity.online.subscribe(online => {
       this.$body.classIf(!online, 'offline');
@@ -260,7 +311,7 @@ class Extension {
       this.$ffDomainApply.remove();
       this.$domainSelect.on('change', this.handleDomainChange);
     }
-    this.$searchSettings.find('input').on('click', () => {
+    this.$showQuerySimple.find('input').on('click', () => {
       if (typeof this.searchSettingsRefreshCountdownInterval === 'number'){
         clearInterval(this.searchSettingsRefreshCountdownInterval);
         this.searchSettingsRefreshCountdownInterval = undefined;
@@ -284,7 +335,7 @@ class Extension {
 
       Settings.toggleSetting(name);
     });
-    this.$themeRadios.on('click', e => {
+    this.$themeRadios.add(this.$queryControlRadios).on('click', e => {
       e.preventDefault();
 
       const { name, value } = e.target;
@@ -384,6 +435,16 @@ class Extension {
       this.updateImage();
     });
     this.$metadataArea.on('mouseenter', () => this.stopMetabarTimer());
+    this.$customQueryInput.on('keyup change', () => {
+      if (this.customQueryInputDebounceTimeout) {
+        clearTimeout(this.customQueryInputDebounceTimeout);
+      }
+      this.customQueryInputDebounceTimeout = setTimeout(() => {
+        if (Settings.getQueryControl() === 'advanced') {
+          Settings.setSetting('customQuery', this.$customQueryInput.val());
+        }
+      }, 1e3);
+    });
 
     const $body = this.$body;
     this.$data.on('click', '.upvotes', function() {
@@ -591,12 +652,17 @@ class Extension {
         return;
       }
 
-      $(new Image()).attr('src', image.view_url).on('load', () => {
+      const isWebm = image.format === 'webm';
+      const $el = this._createElementForSrc(image.view_url, isWebm);
+      const event = isWebm ? 'canplay' : 'load';
+
+      $el.one(event, () => {
         this.updatingImage = false;
         this.$body.removeClass('loading');
         Cache.setImageData(image);
-      }).on('error', () => {
-        if (!image.is_rendered)
+      }).one('error', e => {
+        console.error(e);
+        if (isWebm ? !image.processed : !image.is_rendered)
           this.$data.html('<h1>Image has not been rendered yet</h1><p>Try reloading in a minute or so</p>');
         else this.$data.html('<h1>Image failed to load</h1><p>Either the image is no longer available or the extension is broken</p>');
         this.showImages();
@@ -705,32 +771,86 @@ class Extension {
       $metadataList.children('.hide').classIf(interactions.hide, 'active');
     }
 
-    this.setBackgroundStyles(imageData);
+    this.updateDomImages(imageData);
     this.updateDomainsOnPage();
     this.showImages();
   }
 
-  setBackgroundStyles(imageData) {
+  updateDomImages(imageData) {
     const prop = 'view_url';
-    if (typeof imageData[prop] !== 'string'){
+    const src = imageData[prop];
+    if (typeof src !== 'string'){
       console.warn(`setBackgroundStyles called with object that does not have string property ${prop}`);
       return;
     }
     this.$body.removeClass('no-pony');
     this.hideImages();
-    $(new Image()).attr('src', imageData[prop]).on('load', () => {
-      let url = imageData[prop].replace(/"/g, '%22');
-      this.$style.html(
-        '#image{background-image:url("' + url + '")}' +
-        '#image-ghost{background-image:url("' + url + '")}',
-      );
-      this.$body.removeClass('loading');
-      this.showImages();
-    }).on('error', () => {
+    const isWebm = imageData.format === 'webm';
+    const $element = this._createElementForSrc(src, isWebm);
+    if (isWebm) {
+      if ($element.html() !== this.$webm.children().first().html()) {
+        this.$webm.html($element);
+      }
       this.$style.empty();
-      this.$body.removeClass('loading').addClass('no-pony');
-      this.hideImages();
-    });
+      this.$image.empty();
+      this.$imageGhost.empty();
+      $element.one('canplay', () => {
+        if (Cache.getImageData().id !== imageData.id) {
+          return;
+        }
+        this.$body.removeClass('loading');
+        this.showImages();
+      }).on('error', () => {
+        if (Cache.getImageData().id !== imageData.id) {
+          return;
+        }
+        this.$body.removeClass('loading').addClass('no-pony');
+        this.hideImages();
+      });
+    }
+    else {
+      this.$webm.empty();
+      $element.one('load', () => {
+        if (Cache.getImageData().id !== imageData.id) {
+          return;
+        }
+        let url = src.replace(/"/g, '%22');
+        this.$style.html(
+          '#image{background-image:url("' + url + '")}' +
+          '#image-ghost{background-image:url("' + url + '")}',
+        );
+        this.$body.removeClass('loading');
+        this.showImages();
+      }).one('error', e => {
+        console.error(e);
+        if (Cache.getImageData().id !== imageData.id) {
+          return;
+        }
+        this.$style.empty();
+        this.$body.removeClass('loading').addClass('no-pony');
+        this.hideImages();
+      });
+    }
+  }
+
+  _createElementForSrc(src, isWebm) {
+    if (isWebm) {
+      return $(document.createElement('video')).prop({
+        muted: true,
+        autoplay: true,
+        preload: true,
+        loop: true,
+        playsInline: true,
+      }).append(
+        $(document.createElement('source')).attr({
+          src: src.replace(/\.webm$/, '.mp4'),
+          type: 'video/mp4'
+        }),
+        $(document.createElement('source')).attr({ src, type: 'video/webm' })
+      );
+    }
+
+    return $(new Image()).prop('src', src);
   }
 }
 
