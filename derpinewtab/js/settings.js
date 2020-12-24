@@ -185,7 +185,8 @@ class Settings {
   /** @private */
   _generateSearchQuery() {
     if (this.getQueryControl() === 'advanced') {
-      return this.getCustomQuery() || '*';
+      const customQuery = this.getCustomQuery();
+      return typeof customQuery === 'string' ? customQuery.replace(/\n/g, ' ') : '*';
     }
 
     let size = (this.getHD() ? ['width.gte:1280', 'height.gte:720'] : []);
